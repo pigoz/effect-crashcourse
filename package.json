@@ -1,0 +1,23 @@
+{
+  "sideEffects": false,
+  "name": "effect-playground",
+  "version": "0.0.0",
+  "description": "blargh",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "@effect/io": "^0.0.19",
+    "@fp-ts/data": "^0.0.16",
+    "@types/debug": "^4.1.7",
+    "debug": "^4.3.4",
+    "swc": "^1.0.11",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.1.0",
+    "typescript": "^4.9.3",
+    "zod": "^3.19.1"
+  }
+}
