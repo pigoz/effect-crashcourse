@@ -18,9 +18,27 @@ export const Bar = Context.Tag<Bar>();
 export const ProgramThatWorksWithEnv = Z.gen(function* ($) {
   const { foo } = yield* $(Z.service(Foo));
   const { bar } = yield* $(Z.service(Bar));
+  console.log("generator");
   console.log("foo", foo + 1);
   console.log("bar", bar + 100);
 });
+
+// callback hell!
+export const ProgramThatWorksWithEnvFlatMap = pipe(
+  Z.service(Foo),
+  Z.flatMap(({ foo }) =>
+    pipe(
+      Z.service(Bar),
+      Z.flatMap(({ bar }) =>
+        Z.sync(() => {
+          console.log("flatMap");
+          console.log("foo", foo + 1);
+          console.log("bar", bar + 100);
+        })
+      )
+    )
+  )
+);
 
 const program = ProgramThatWorksWithEnv;
 
