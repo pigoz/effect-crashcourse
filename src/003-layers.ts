@@ -12,6 +12,7 @@ export const Foo = Context.Tag<Foo>();
 export interface Bar {
   readonly bar: number;
 }
+
 export const Bar = Context.Tag<Bar>();
 
 export const ProgramThatWorksWithEnv = Z.gen(function* ($) {
