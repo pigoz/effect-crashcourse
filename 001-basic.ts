@@ -57,23 +57,6 @@ export const y = pipe(
   Z.flatMap(Z.fromEither) // Z.Effect<never, 'fail', number>
 );
 
-// Suppose we want to implement our own custom random generator and use it in
-// our code as as dependency, similarly to how we used the one provided by
-// Effect
-export interface CustomRandom {
-  readonly next: () => number;
-}
-
-// XXX: explain what Context.Tag is, and why is it necessary.
-export const CustomRandom = Context.Tag<CustomRandom>();
-
-export const w = pipe(
-  Z.service(CustomRandom), // Z.Effect<CustomRandom, never, CustomRandom>
-  Z.map((random) => random.next()), // Z.Effect<never, never, number>
-  Z.map(eitherFromRandom), // Z.Effect<never, never, Either<'fail', number>>
-  Z.flatMap(Z.fromEither) // Z.Effect<never, 'fail', number>
-);
-
 /* Until now all the computations we defined are stored as Thunks. Thunks is
  * functional programming jargon to say that they are not immediately executed.
  *
@@ -84,6 +67,32 @@ export const w = pipe(
  */
 
 Z.unsafeRunPromise(y); // executes y
+
+/* Suppose we want to implement our own custom random generator and use it in
+ * our code as as dependency, similarly to how we used the one provided by
+ * Effect
+ */
+export interface CustomRandom {
+  readonly next: () => number;
+}
+
+/* To provide us with it's dependency injection features, Effect uses a data
+ * structure called Context.Context to store a table mapping Tags to their
+ * implementation (called Service).
+ *
+ * In types it would be Map<Tag, Service>.
+ *
+ * In our program we can say that we depend on the implementation of
+ * CustomRandom (a tag) by calling Z.service(CustomRandom).
+ */
+export const CustomRandom = Context.Tag<CustomRandom>();
+
+export const w = pipe(
+  Z.service(CustomRandom), // Z.Effect<CustomRandom, never, CustomRandom>
+  Z.map((random) => random.next()), // Z.Effect<never, never, number>
+  Z.map(eitherFromRandom), // Z.Effect<never, never, Either<'fail', number>>
+  Z.flatMap(Z.fromEither) // Z.Effect<never, 'fail', number>
+);
 
 /*
  * The cool thing is the CustomRandom we defined as a requirement of `w`
@@ -98,16 +107,21 @@ Z.unsafeRunPromise(y); // executes y
  * Type 'CustomRandom' is not assignable to type 'never'.
  *
  * So we can use provideService, provideEnvironment, provideLayer, to provide
- * and implementation and turn the R
+ * and implementation.
+ *
+ * By providing an implementation, we turn the R in Effect<R, E, A> into a
+ * `never`, so we end up with a Effect<never, E, A> which we can run.
  */
 
-// with provideService (handy for Effects that depend on a single service)
+// Providing an implementaion with provideService
+// (handy for Effects that depend on a single service)
 export const ws = pipe(
   w,
   Z.provideService(CustomRandom)({ next: Math.random })
 );
 
-// with provideEnvironment (handy for Effects that depend on multiple services)
+// Providing an implementaion with provideEnvironment
+// (handy for Effects that depend on multiple services)
 const env = pipe(
   Context.empty(),
   Context.add(CustomRandom)({ next: Math.random })
@@ -118,7 +132,9 @@ export const we = pipe(
   Z.provideEnvironment(env) // Z.Effect<never, 'fail', number>
 );
 
-// or using layers (handy for real world systems with complex dependency trees)
+// Providing an implementaion with layers
+// (handy for real world systems with complex dependency trees)
+// (will go more in depth about layers in a future guide)
 export const CustomRandomLive = ZL.succeed(CustomRandom)({ next: Math.random });
 
 export const wl = pipe(w, Z.provideLayer(CustomRandomLive));
