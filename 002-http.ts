@@ -32,6 +32,8 @@ const GistDecoder = z.object({
   ),
 });
 
+export type Gist = z.infer<typeof GistDecoder>;
+
 const id = "97459c0045f373f4eaf126998d8f65dc";
 
 const program = pipe(
@@ -41,10 +43,10 @@ const program = pipe(
   // Z.Effect<never, 'fetch err' | 'get json err', unknown>
   Z.flatMap(getJson),
 
-  // Z.Effect<never, 'fetch err' | 'get json err', Either<ZodError, GistDecoder>>
+  // Z.Effect<never, 'fetch err' | 'get json err', Either<ZodError, Gist>>
   Z.map(decode(GistDecoder)),
 
-  // Z.Effect<never, 'fetch err' | 'get json err' | ZodError, ZodError, GistDecoder>
+  // Z.Effect<never, 'fetch err' | 'get json err' | ZodError, Gist>
   Z.flatMap(Z.fromEither)
 );
 
