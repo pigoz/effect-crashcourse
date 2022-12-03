@@ -21,6 +21,7 @@ import * as Context from "@fp-ts/data/Context";
  *  - A is the type of the error in case if the computation succeeds
  */
 
+// Here's some basic constructors
 export const s = Z.succeed(7); // Z.Effect<never, never, number>
 
 export const f = Z.fail(3); // Z.Effect<never, number, never>
@@ -35,18 +36,20 @@ export const sf = Z.failSync(() => {
   return 4;
 }); // Z.Effect<never, number, never>
 
+// Enough of this. It's time to build something real
 function eitherFromRandom(random: number): E.Either<"fail", number> {
   return random > 0.5 ? E.right(random) : E.left("fail" as const);
 }
 
-// sometimes fail
+// This will fail sometimes
 export const x = pipe(
   Z.sync(() => Math.random()), // Z.Effect<never, never, number>
   Z.map(eitherFromRandom), // Z.Effect<never, never, Either<'fail', number>>
   Z.flatMap(Z.fromEither) // Z.Effect<never, 'fail', number>
 );
 
-// or better using inputs (R)
+// Same thing but using the number generator provided by Effect
+// It's passed to us as an input (R)
 export const y = pipe(
   Z.random(), // Z.Effect<Random, never, Random>
   Z.flatMap((random) => random.next()), // Z.Effect<never, never, number>
@@ -54,7 +57,9 @@ export const y = pipe(
   Z.flatMap(Z.fromEither) // Z.Effect<never, 'fail', number>
 );
 
-// or if we want to model a custom random value generator
+// Suppose we want to implement our own custom random generator and use it in
+// our code as as dependency, similarly to how we used the one provided by
+// Effect
 export interface CustomRandom {
   readonly next: () => number;
 }
@@ -78,7 +83,7 @@ export const w = pipe(
  * do (using map, flatMap, etc), and then execute them.
  */
 
-Z.unsafeRunPromiseExit(y); // executes y
+Z.unsafeRunPromise(y); // executes y
 
 /*
  * The cool thing is the CustomRandom we defined as a requirement of `w`
