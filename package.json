@@ -10,8 +10,8 @@
   "author": "",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@effect/io": "^0.0.19",
-    "@fp-ts/data": "^0.0.16",
+    "@effect/io": "^0.0.29",
+    "@fp-ts/data": "^0.0.19",
     "@types/debug": "^4.1.7",
     "debug": "^4.3.4",
     "swc": "^1.0.11",
