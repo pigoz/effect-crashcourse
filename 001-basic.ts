@@ -56,10 +56,10 @@ export const y = pipe(
   Z.flatMap(Z.fromEither) // Z.Effect<never, 'fail', number>
 );
 
-/* Until now all the computations we defined are stored as Thunks. Thunks is
- * functional programming jargon to say that they are not immediately executed.
- *
- * You can think of a Thunk as: type Thunk<T> = () => T
+/* Up to this point we only constructed Effect values, none of the computations
+ * that we defined have been executed. Effects are in fact just objects that
+ * wrap your computations as they are, for example `pipe(a, flatMap(f))` is
+ * represented as `new FlatMap(a, f)`.
  *
  * This allows us to modify computations until we are happy with what they
  * do (using map, flatMap, etc), and then execute them.
