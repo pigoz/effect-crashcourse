@@ -49,9 +49,8 @@ export const x = pipe(
 );
 
 // Same thing but using the number generator provided by Effect
-// It's passed to us as an input (R)
 export const y = pipe(
-  Z.random(), // Z.Effect<Random, never, Random>
+  Z.random(), // Z.Effect<never, never, Random>
   Z.flatMap((random) => random.next()), // Z.Effect<never, never, number>
   Z.map(eitherFromRandom), // Z.Effect<never, never, Either<'fail', number>>
   Z.flatMap(Z.fromEither) // Z.Effect<never, 'fail', number>
@@ -68,8 +67,8 @@ export const y = pipe(
 
 Z.unsafeRunPromise(y); // executes y
 
-/* Suppose we want to implement our own custom random generator and use it in
- * our code as as dependency, similarly to how we used the one provided by
+/* Suppose we want to implement our own custom random generator, and use it in
+ * our code as a dependency, similarly to how we used the one provided by
  * Effect
  */
 export interface CustomRandom {
@@ -77,7 +76,7 @@ export interface CustomRandom {
 }
 
 /* To provide us with it's dependency injection features, Effect uses a data
- * structure called Context.Context to store a table mapping Tags to their
+ * structure called Context.Context. It is a table mapping Tags to their
  * implementation (called Service).
  *
  * In types it would be Map<Tag, Service>.
