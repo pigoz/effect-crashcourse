@@ -99,7 +99,7 @@ export const w = pipe(
  *
  * Z.unsafeRunPromise(w);
  *
- * Would lead to the followin type error:
+ * Would lead to the following type error:
  *
  * Argument of type 'Effect<CustomRandom, "fail", number>' is not assignable
  * to parameter of type 'Effect<never, "fail", number>'.
