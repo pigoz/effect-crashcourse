@@ -97,7 +97,7 @@ export const w = pipe(
  * The cool thing is the CustomRandom we defined as a requirement of `w`
  * doesn't have an implementation.
  *
- * Z.unsafeRunPromiseExit(w);
+ * Z.unsafeRunPromise(w);
  *
  * Would lead to the followin type error:
  *
