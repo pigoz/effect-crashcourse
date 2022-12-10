@@ -1,3 +1,5 @@
-A casual fp-ts user's journey into learning @effect/io
+The practical guide I wish existed while learning @effect-ts
+
+The focus is on the new @effect-ts/io and is from the point of view of a casual fp-ts 2 user's perspective.
 
 Start from [001-basic.ts](001-basic.ts)!
