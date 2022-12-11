@@ -99,9 +99,9 @@ const resource: Z.Effect<Scope.Scope, never, Baz> = Z.acquireRelease(
 );
 // XXX would I be able to run resource by providing a scope manually?
 // i.e. through provideService
-// const s = Scope.make();
-// export const ScopeContext = Context.Tag<Scope.Scope>();
-// Z.unsafeRunPromise(pipe(resource, Z.provideServiceEffect(ScopeContext)(s)));
+const s = Z.unsafeRunSync(Scope.make());
+Z.unsafeRunPromise(pipe(resource, Z.provideService(Scope.Tag)(s)));
+Scope.close(Exit.unit())(s)
 
 /*
  * ZL.scoped constructs a layer with the resource. Normally you wouldn't
