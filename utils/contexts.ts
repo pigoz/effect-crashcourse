@@ -17,3 +17,9 @@ export interface Baz {
 }
 
 export const Baz = Context.Tag<Baz>();
+
+export interface FileDescriptor {
+  readonly fd: number;
+}
+
+export const FileDescriptor = Context.Tag<FileDescriptor>();

@@ -2,7 +2,8 @@ import { pipe } from "@fp-ts/data/Function";
 import * as Z from "@effect/io/Effect";
 import * as Scope from "@effect/io/Scope";
 import * as Exit from "@effect/io/Exit";
-import { Baz } from "utils/contexts";
+import { logged } from "utils/debug";
+import { FileDescriptor } from "utils/contexts";
 import * as fs from "node:fs";
 import { promisify } from "node:util";
 
@@ -52,52 +53,56 @@ import { promisify } from "node:util";
  *
  * 4) Returns the A value from the acquire effect.
  *
- * Let's define a basic resource that implements the Baz interface.
+ * Let's define a basic resource that implements the FileDescriptor interface.
  */
-export const resource: Z.Effect<Scope.Scope, never, Baz> = Z.acquireRelease(
-  Z.sync(() => {
-    console.log("BazLive", "acquire");
-    return { baz: 1 };
-  }),
-  (baz) =>
-    Z.sync(() => {
-      console.log("BazLive", "release", baz);
-    })
-);
+export const resource: Z.Effect<Scope.Scope, never, FileDescriptor> =
+  Z.acquireRelease(
+    pipe(
+      Z.promise(() => promisify(fs.open)("/dev/null", "w")),
+      Z.map((fd) => ({ fd })),
+      logged("FileDescriptor acquired")
+    ),
+    ({ fd }) =>
+      pipe(
+        Z.promise(() => promisify(fs.close)(fd)),
+        logged("FileDescriptor released")
+      )
+  );
 
 /*
- * The example is fairly stupid and the release does nothing. As you can
- * imagine inside acquire we could establish a network connection, and close
- * the connection inside release.
+ * The example above manages the lifetime of a File Descriptor.
+ *
+ * As you can imagine this could be any resource: a database connection pool,
+ * a network connection, etc.
  *
  * Anyhow, we now have our "scoped effect". If we want to run it we have to
- * provide a Scope to it (turning R from Scope to never).
+ * provide a Scope to it - which turns R from Scope to never.
  */
-type useResource = Z.Effect<never, never, void>;
+type useFileDescriptor = Z.Effect<never, never, void>;
 
-export const useResourceStupid: useResource = Z.gen(function* ($) {
+export const useFileDescriptorStupid: useFileDescriptor = Z.gen(function* ($) {
   const scope = yield* $(Scope.make());
-  const baz = yield* $(pipe(resource, Z.provideService(Scope.Tag)(scope)));
-  console.log("Baz", baz);
+  const fd = yield* $(pipe(resource, Z.provideService(Scope.Tag)(scope)));
+  console.log("useFileDescriptorStupid", fd);
   yield* $(Scope.close(Exit.unit())(scope));
 });
 
 /* If you look closely at it, the previous code can be split in 3 steps:
  *
  *  - acquire: creates the scope with Scope.make
- *  - use: uses the scope by providing to the resource and logging
+ *  - use: provides the scope to the resource and console.log
  *  - release: closes the scope
  *
  *  Since this is a common pattern, Effect comes with a function called
  *  acquireUseRelease to build such effects.
  */
-export const useResourceSmarter: useResource = Z.acquireUseRelease(
+export const useFileDescriptorSmarter: useFileDescriptor = Z.acquireUseRelease(
   Scope.make(),
   (scope) =>
     pipe(
       resource,
       Z.provideService(Scope.Tag)(scope),
-      Z.flatMap((baz) => Z.sync(() => console.log("Baz", baz)))
+      logged("useFileDescriptorSmarter")
     ),
   (scope) => Scope.close(Exit.unit())(scope)
 );
@@ -108,17 +113,19 @@ export const useResourceSmarter: useResource = Z.acquireUseRelease(
  * acquireUseRelease dance for you, providing a Scope to it's argument, and
  * closing it once it's done running.
  */
-export const useResource: useResource = pipe(
+export const useFileDescriptor: useFileDescriptor = pipe(
   resource,
-  Z.flatMap((baz) => Z.sync(() => console.log("useResource/Baz", baz))),
+  logged("useFileDescriptor"),
   Z.scoped
 );
 
-/* Z.unsafeRunPromise(useResource); will print:
+Z.unsafeRunPromise(useFileDescriptor);
+
+/* Z.unsafeRunPromise(useFileDescriptor); will print something like:
  *
- * BazLive acquire
- * useResource/Baz { baz: 1 }
- * BazLive release { baz: 1 }
+ * FileDescriptor acquired { fd: 22 }
+ * useFileDescriptor { fd: 22 }
+ * FileDescriptor released
  */
 
 /* Bonus side note.
@@ -134,22 +141,8 @@ export const useResource: useResource = pipe(
  * completed.
  *
  * For our stupid example, the following would have been perfectly fine, and
- * it would be useful to handle access to resources that aren't application wide
- * (i.e.: open a file, write to it, close file).
+ * it would be fine to handle access to resources that aren't application wide
  */
-export const resource2: useResource = Z.acquireUseRelease(
-  Z.sync(() => {
-    console.log("BazLive", "acquire");
-    return { baz: 1 };
-  }),
-  (baz) => Z.sync(() => console.log("useResource/acquireUseRelease", baz)),
-  (baz) =>
-    Z.sync(() => {
-      console.log("BazLive", "release", baz);
-    })
-);
-
-/* A more realistic example with files: */
 export const writeSomethingToDevNull = (something: string) =>
   Z.acquireUseRelease(
     Z.promise(() => promisify(fs.open)("/dev/null", "w")),
