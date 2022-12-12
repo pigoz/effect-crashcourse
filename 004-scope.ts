@@ -119,8 +119,6 @@ export const useFileDescriptor: useFileDescriptor = pipe(
   Z.scoped
 );
 
-Z.unsafeRunPromise(useFileDescriptor);
-
 /* Z.unsafeRunPromise(useFileDescriptor); will print something like:
  *
  * FileDescriptor acquired { fd: 22 }
@@ -133,15 +131,16 @@ Z.unsafeRunPromise(useFileDescriptor);
  * acquireUseRelease is kind of a specialized version of acquireRelease.
  *
  * The main difference is acquireUseRelease knows when you are done using the
- * resource created with acquire (because you provide a use function!), so it
- * also knows when id can execute release.
+ * resource created with acquire (because you provide a use effect!), so it
+ * also knows when it can execute release.
  *
- * On the other hand, with acquireRelease your own code is the use function,
+ * On the other hand, with acquireRelease your whole code is the use effect,
  * so you have to go through closing a Scope to signal when your "use" has
  * completed.
  *
  * For our stupid example, the following would have been perfectly fine, and
  * it would be fine to handle access to resources that aren't application wide
+ * and meant to be reused.
  */
 export const writeSomethingToDevNull = (something: string) =>
   Z.acquireUseRelease(
@@ -151,6 +150,7 @@ export const writeSomethingToDevNull = (something: string) =>
   );
 /*
  * But the point of Layers is to define application wide resources.
+ *
  * The "use" effect is your whole application, thus inversion of control is
- * not possible and you are needed to use acquireRelease and Scope.
+ * not possible and you have to use acquireRelease and Scope.
  */
