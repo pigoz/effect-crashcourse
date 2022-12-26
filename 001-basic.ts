@@ -8,7 +8,7 @@ import * as Context from "@fp-ts/data/Context";
  *
  * Z.Effect<R, E, A>
  *
- * You can think of it as a type that models a potentially async computation.
+ * It as a type that models a potentially async computation.
  * The computation has inputs (R), can fail (E) or succeed (A).
  *
  * You can think of Z.Effect<R, E, A> as equivalent to
@@ -124,6 +124,7 @@ export const ws = pipe(
 const env = pipe(
   Context.empty(),
   Context.add(CustomRandom)({ next: Math.random })
+  // Context.add(Foo)({ foo: 'foo' })
 );
 
 export const we = pipe(
