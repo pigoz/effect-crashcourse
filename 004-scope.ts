@@ -107,9 +107,15 @@ export const useFileDescriptorSmarter: useFileDescriptor = Z.acquireUseRelease(
   (scope) => Scope.close(Exit.unit())(scope)
 );
 
-/* That was still quite long to write, and using scopes is very common.
+/* While the first example didn't have any error handling, this has the added
+ * benefit of being a spiritual equivalent of try-catch.
  *
- * So Effect comes with a `scoped` function that does the whole the
+ * If the acquire effect succeeds, similarly to a finally clause, the end
+ * effect is guaranteed to be run regardless of the use effect's result.
+ *
+ * Anyway, that was still quite long to write, and using scopes is very common.
+ *
+ * So Effect comes with a `scoped` function that does the whole
  * acquireUseRelease dance for you, providing a Scope to it's argument, and
  * closing it once it's done running.
  */
@@ -138,6 +144,18 @@ export const useFileDescriptor: useFileDescriptor = pipe(
  * so you have to go through closing a Scope to signal when your "use" has
  * completed.
  *
+ * As an exercise, we can write acquireUseRelease in terms of acquireRelease.
+ * The types are little more lax compared to the one provided by Effect, but
+ * this is just to drive the point home.
+ */
+export const myAcquireUseRelease = <R, E, A, R2, E2, A2, R3, X>(
+  acquire: Z.Effect<R, E, A>,
+  use: (a: A) => Z.Effect<R2, E2, A2>,
+  release: (a: A, exit: Exit.Exit<unknown, unknown>) => Z.Effect<R3, never, X>
+) => pipe(Z.acquireRelease(acquire, release), Z.flatMap(use), Z.scoped);
+
+/*
+ *
  * For our stupid example, the following would have been perfectly fine, and
  * it would be fine to handle access to resources that aren't application wide
  * and meant to be reused.
@@ -148,6 +166,7 @@ export const writeSomethingToDevNull = (something: string) =>
     (fd) => Z.promise(() => promisify(fs.writeFile)(fd, something)),
     (fd) => Z.promise(() => promisify(fs.close)(fd))
   );
+
 /*
  * But the point of Layers is to define application wide resources.
  *
