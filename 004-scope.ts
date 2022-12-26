@@ -2,8 +2,8 @@ import { pipe } from "@fp-ts/data/Function";
 import * as Z from "@effect/io/Effect";
 import * as Scope from "@effect/io/Scope";
 import * as Exit from "@effect/io/Exit";
-import { logged } from "utils/debug";
 import { FileDescriptor } from "utils/contexts";
+import { logged } from "utils/debug";
 import * as fs from "node:fs";
 import { promisify } from "node:util";
 
