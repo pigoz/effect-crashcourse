@@ -53,8 +53,13 @@ export const y = pipe(
   Z.random(), // Z.Effect<never, never, Random>
   Z.flatMap((random) => random.next()), // Z.Effect<never, never, number>
   Z.map(eitherFromRandom), // Z.Effect<never, never, Either<'fail', number>>
-  Z.flatMap(Z.fromEither) // Z.Effect<never, 'fail', number>
+  Z.absolve // Z.Effect<never, 'fail', number>
 );
+
+/* NOTE:
+ * Z.flatMap(Z.fromEither) is so common that there's a combinator that:
+ * Z.absolve
+ */
 
 /* Up to this point we only constructed Effect values, none of the computations
  * that we defined have been executed. Effects are in fact just objects that
@@ -90,7 +95,7 @@ export const w = pipe(
   Z.service(CustomRandom), // Z.Effect<CustomRandom, never, CustomRandom>
   Z.map((random) => random.next()), // Z.Effect<never, never, number>
   Z.map(eitherFromRandom), // Z.Effect<never, never, Either<'fail', number>>
-  Z.flatMap(Z.fromEither) // Z.Effect<never, 'fail', number>
+  Z.absolve // Z.Effect<never, 'fail', number>
 );
 
 /*
