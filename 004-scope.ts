@@ -3,7 +3,6 @@ import * as Z from "@effect/io/Effect";
 import * as Scope from "@effect/io/Scope";
 import * as Exit from "@effect/io/Exit";
 import { FileDescriptor } from "utils/contexts";
-import { logged } from "utils/debug";
 import * as fs from "node:fs";
 import { promisify } from "node:util";
 
@@ -60,12 +59,12 @@ export const resource: Z.Effect<Scope.Scope, never, FileDescriptor> =
     pipe(
       Z.promise(() => promisify(fs.open)("/dev/null", "w")),
       Z.map((fd) => ({ fd })),
-      logged("FileDescriptor acquired")
+      Z.tap(() => Z.logInfo("FileDescriptor acquired"))
     ),
     ({ fd }) =>
       pipe(
         Z.promise(() => promisify(fs.close)(fd)),
-        logged("FileDescriptor released")
+        Z.tap(() => Z.logInfo("FileDescriptor released"))
       )
   );
 
@@ -83,7 +82,7 @@ type useFileDescriptor = Z.Effect<never, never, void>;
 export const useFileDescriptorStupid: useFileDescriptor = Z.gen(function* ($) {
   const scope = yield* $(Scope.make());
   const fd = yield* $(pipe(resource, Z.provideService(Scope.Tag)(scope)));
-  console.log("useFileDescriptorStupid", fd);
+  yield* $(Z.logInfo(`useFileDescriptorStupid ${fd}`));
   yield* $(Scope.close(Exit.unit())(scope));
 });
 
@@ -101,8 +100,8 @@ export const useFileDescriptorSmarter: useFileDescriptor = Z.acquireUseRelease(
   (scope) =>
     pipe(
       resource,
-      Z.provideService(Scope.Tag)(scope),
-      logged("useFileDescriptorSmarter")
+      Z.tap((_) => Z.logInfo(`useFileDescriptorSmarter ${_.fd}`)),
+      Z.provideService(Scope.Tag)(scope)
     ),
   (scope) => Scope.close(Exit.unit())(scope)
 );
@@ -121,9 +120,11 @@ export const useFileDescriptorSmarter: useFileDescriptor = Z.acquireUseRelease(
  */
 export const useFileDescriptor: useFileDescriptor = pipe(
   resource,
-  logged("useFileDescriptor"),
+  Z.tap((_) => Z.logInfo(`useFileDescriptor ${_.fd}`)),
   Z.scoped
 );
+
+Z.unsafeRunPromise(useFileDescriptor);
 
 /* Z.unsafeRunPromise(useFileDescriptor); will print something like:
  *
