@@ -3,13 +3,12 @@ import * as Z from "@effect/io/Effect";
 import * as ZL from "@effect/io/Layer";
 import * as Scope from "@effect/io/Scope";
 import * as Exit from "@effect/io/Exit";
-import { logged } from "utils/debug";
 import * as fs from "node:fs";
 import { promisify } from "node:util";
 
 /* In 001-basic we saw a very simple example using Layers to handle dependency
- * injection. Here we build a realistic Layer example using Scopep and Runtime
- * that you chould be able to use in your own production application.
+ * injection. Here we build a realistic Layer example using Scope and Runtime
+ * that you should be able to use in your own production application.
  *
  * Firstly we import some services definitions:
  */
@@ -21,13 +20,13 @@ import { Foo, Bar, FileDescriptor } from "utils/contexts";
  */
 const program1 = Z.gen(function* ($) {
   const foo = yield* $(Z.service(Foo));
-  console.log("program1", foo);
+  yield* $(Z.logInfo(`program1 ${JSON.stringify(foo)}`));
 });
 
 const program2 = Z.gen(function* ($) {
   const baz = yield* $(Z.service(FileDescriptor));
   const bar = yield* $(Z.service(Bar));
-  console.log("program2", bar, baz);
+  yield* $(Z.logInfo(`program2 ${JSON.stringify(bar)} ${JSON.stringify(baz)}`));
 });
 
 // These are stupid Layers with no lifetime
@@ -41,35 +40,44 @@ export const resource: Z.Effect<Scope.Scope, never, FileDescriptor> =
     pipe(
       Z.promise(() => promisify(fs.open)("/dev/null", "w")),
       Z.map((fd) => ({ fd })),
-      logged("FileDescriptor acquired")
+      Z.tap(() => Z.logInfo("FileDescriptor acquired"))
     ),
     ({ fd }) =>
       pipe(
         Z.promise(() => promisify(fs.close)(fd)),
-        logged("FileDescriptor released")
+        Z.tap(() => Z.logInfo("FileDescriptor released"))
       )
   );
-
-/* Similarly to how we used Effect.scoped to provide a Scope to our scoped
- * effect, Layer.scoped builds a Layer from a scoped effect.
- *
- * ZL.scoped constructs a layer from. Normally you wouldn't
- * need to have a `resource` variable. It was done for clarity purposes.
- */
-export const FileDescriptorLive: ZL.Layer<never, never, FileDescriptor> =
-  ZL.scoped(FileDescriptor)(resource);
-
-// TODO: similar to 004-scope expand on what ZL.scoped does under the hood
 
 /*
  * Now comes the interestring part.
  *
- * First we define a function that given a Layer creates a Runtime and a
- * cleanup function to be run after the Runtime is not useful anymore.
+ * Similarly to how we used Effect.scoped to provide a Scope to our scoped
+ * effect, Layer.scoped builds a Layer from a scoped effect and provides a
+ * Scope to it.
  *
- * NOTE: instead of providing the
+ * Every Layer has an implicit Scope which doesn't appear in it's requirements (R),
+ * and is the Scope passed to buildWithScope.
+ *
+ * The main difference is that Effect.scoped provides a scope that's newly
+ * created with Scope.make. On the other hand, Layer.scope forks the implicit
+ * Scope and provides the child to the scoped Effect.
+ *
+ * This results in the scoped Effect's release being executed when the implicit
+ * Scope is closed (if you recall the previous chapter, acquireRelease adds
+ * the release effect to the Scope with addFinalizer).
  */
-const appRuntime = <R, E, A>(layer: ZL.Layer<R, E, A>) =>
+export const FileDescriptorLive: ZL.Layer<never, never, FileDescriptor> =
+  ZL.scoped(FileDescriptor)(resource);
+
+/* This next part is the final glue code needed and is platform specific.
+ * We assume a Node environment.
+ *
+ * Firstly, we define a function that given a Layer creates a Runtime and a
+ * cleanup Effect (close) that should be run after the Runtime is not useful
+ * anymore.
+ */
+const makeAppRuntime = <R, E, A>(layer: ZL.Layer<R, E, A>) =>
   Z.gen(function* ($) {
     const scope = yield* $(Scope.make());
     const env = yield* $(ZL.buildWithScope(scope)(layer));
@@ -83,8 +91,8 @@ const appRuntime = <R, E, A>(layer: ZL.Layer<R, E, A>) =>
 
 /*
  * We create a layer for our application, concatenating all the "live" layer
- * implementations we defined
- * */
+ * implementations we defined.
+ */
 type AppLayer = Foo | Bar | FileDescriptor;
 
 const appLayerLive: ZL.Layer<never, never, AppLayer> = pipe(
@@ -94,24 +102,26 @@ const appLayerLive: ZL.Layer<never, never, AppLayer> = pipe(
 );
 
 /*
- * We get a runtime and the close function. If your application allows it, use
- * use unsafeRunPromise instead.
+ * We create a runtime and the close effect
  */
-const { runtime, close } = Z.unsafeRunSync(appRuntime(appLayerLive));
+const promise = Z.unsafeRunPromise(makeAppRuntime(appLayerLive));
 
-/*
- * We register the close function to be run on node's exit. This will run
- * BazLive's release function we defined before.
- */
-process.on("beforeExit", () => Z.unsafeRunPromise(close));
+promise.then(({ runtime, close }) => {
+  /*
+   * Since we are in a Node environment, we register the close effect to be run
+   * on node's exit. This will run the release Effect for all the resources in
+   * our AppLayer.
+   */
+  process.on("beforeExit", () => Z.unsafeRunPromise(close));
 
-/*
- * Finally, we can run the effects reusing resources. In a webapp these could
- * be requests.
- */
-runtime.unsafeRunPromise(program1);
-runtime.unsafeRunPromise(program2);
-runtime.unsafeRunPromise(program2);
+  /*
+   * Finally, we can run the effects reusing resources. In a webapp these could
+   * be requests.
+   */
+  runtime.unsafeRunPromise(program1);
+  runtime.unsafeRunPromise(program2);
+  runtime.unsafeRunPromise(program2);
+});
 
 /* prints out:
  *
