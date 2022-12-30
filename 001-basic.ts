@@ -8,7 +8,7 @@ import * as Context from "@fp-ts/data/Context";
  *
  * Z.Effect<R, E, A>
  *
- * It as a type that models a potentially async computation.
+ * It is a type that models a potentially async computation.
  * The computation has inputs (R), can fail (E) or succeed (A).
  *
  * You can think of Z.Effect<R, E, A> as equivalent to
