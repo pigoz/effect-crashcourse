@@ -18,7 +18,7 @@ import * as Context from "@fp-ts/data/Context";
  *
  *  - R is the computation requirements
  *  - E is the type of the error in case the computation fails
- *  - A is the type of returned by in casa the computation succeeds
+ *  - A is the return type in case the computation succeeds
  */
 
 // Here's some basic constructors
