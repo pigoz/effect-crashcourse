@@ -17,8 +17,8 @@ import * as Context from "@fp-ts/data/Context";
  *   (r: R) => TaskEither<E, A> (in fp-ts 2)
  *
  *  - R is the computation requirements
- *  - E is the type of the error in case if the computation fails
- *  - A is the type of the error in case if the computation succeeds
+ *  - E is the type of the error in case the computation fails
+ *  - A is the type of returned by in casa the computation succeeds
  */
 
 // Here's some basic constructors
