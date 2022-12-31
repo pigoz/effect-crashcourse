@@ -57,8 +57,8 @@ export const y = pipe(
 );
 
 /* NOTE:
- * Z.flatMap(Z.fromEither) is so common that there's a combinator that:
- * Z.absolve
+ * Z.flatMap(Z.fromEither) is so common that there's a built in combinator
+ * that's equivalent to it: Z.absolve
  */
 
 /* Up to this point we only constructed Effect values, none of the computations
