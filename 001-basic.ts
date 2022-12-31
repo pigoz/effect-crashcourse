@@ -146,7 +146,7 @@ export const wl = pipe(w, Z.provideLayer(CustomRandomLive));
 
 /*
  * The powerful part of Effect is you can have multiple implementations for
- * the services your Thunks depend on.
+ * the services you depend on.
  *
  * This can be useful for i.e. mocking:
  */
