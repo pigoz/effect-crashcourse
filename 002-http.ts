@@ -10,13 +10,13 @@ import { decode } from "utils/decode";
 const fetchGist = (id: string) =>
   Z.tryCatchPromise(
     () => fetch(`https://api.github.com/gists/${id}`),
-    () => "fetch err" as const
+    () => "fetch" as const
   );
 
 const getJson = (res: Response) =>
   Z.tryCatchPromise(
     () => res.json() as Promise<unknown>, // Promise<any> otherwise
-    () => "get json err" as const
+    () => "json" as const
   );
 
 const GistDecoder = z.object({
@@ -37,16 +37,16 @@ export type Gist = z.infer<typeof GistDecoder>;
 const id = "97459c0045f373f4eaf126998d8f65dc";
 
 const program = pipe(
-  // Z.Effect<never, 'fetch error', Response>
+  // Z.Effect<never, 'fetch', Response>
   fetchGist(id),
 
-  // Z.Effect<never, 'fetch err' | 'get json err', unknown>
+  // Z.Effect<never, 'fetch' | 'json', unknown>
   Z.flatMap(getJson),
 
-  // Z.Effect<never, 'fetch err' | 'get json err', Either<ZodError, Gist>>
-  Z.map(decode(GistDecoder)),
+  // Z.Effect<never, 'fetch' | 'json', Either<ZodError, Gist>>
+  Z.map(decode<Gist>(GistDecoder)),
 
-  // Z.Effect<never, 'fetch err' | 'get json err' | ZodError, Gist>
+  // Z.Effect<never, 'fetch' | 'json' | ZodError, Gist>
   Z.flatMap(Z.fromEither)
 );
 
