@@ -3,14 +3,16 @@ import { F as Fn, List } from "ts-toolbelt";
 
 type Callback<E, A> = (e: E, a: A) => void;
 
-export interface CustomEffectify<TCustom extends Fn.Function> extends Function {
+export interface CustomEffectify<TCustom extends Fn.Function>
+  extends Fn.Function {
   __promisify__: TCustom;
 }
 
 export type UnwrapPromise<T> = T extends Promise<infer A> ? A : never;
 
 export function effectify<
-  F extends Fn.Function,
+  X extends Fn.Function,
+  F extends CustomEffectify<X>,
   Cb = List.Last<Fn.Parameters<F>>,
   E = Cb extends Fn.Function ? NonNullable<Fn.Parameters<Cb>[0]> : never
 >(
