@@ -1,31 +1,46 @@
 import * as Z from "@effect/io/Effect";
-import { F as Fn, List } from "ts-toolbelt";
+import { CustomPromisifyLegacy, CustomPromisifySymbol } from "node:util";
 
 type Callback<E, A> = (e: E, a: A) => void;
 
-export interface CustomEffectify<TCustom extends Fn.Function>
-  extends Fn.Function {
-  __promisify__: TCustom;
-}
+type Fn = (...args: any) => any;
+
+export type CustomPromisify<TCustom extends Fn> =
+  | CustomPromisifySymbol<TCustom>
+  | CustomPromisifyLegacy<TCustom>;
+
+type Parameters<F extends Function> = F extends (...args: infer P) => any
+  ? P
+  : never;
+
+export type Length<L extends unknown[]> = L["length"];
+
+export type Tail<L extends unknown[]> = L extends readonly []
+  ? L
+  : L extends readonly [unknown?, ...infer LTail]
+  ? LTail
+  : L;
+
+export type Last<L extends unknown[]> = L[Length<Tail<L>>];
 
 export type UnwrapPromise<T> = T extends Promise<infer A> ? A : never;
 
 export function effectify<
-  X extends Fn.Function,
-  F extends CustomEffectify<X>,
-  Cb = List.Last<Fn.Parameters<F>>,
-  E = Cb extends Fn.Function ? NonNullable<Fn.Parameters<Cb>[0]> : never
+  X extends Fn,
+  F extends CustomPromisify<X>,
+  Cb = Last<Parameters<F>>,
+  E = Cb extends Function ? NonNullable<Parameters<Cb>[0]> : never
 >(
   fn: F
 ): (
-  ...args: F extends CustomEffectify<infer TCustom>
-    ? Fn.Parameters<TCustom>
+  ...args: F extends CustomPromisify<infer TCustom>
+    ? Parameters<TCustom>
     : never[]
 ) => Z.Effect<
   never,
   E,
-  F extends CustomEffectify<infer TCustom>
-    ? UnwrapPromise<Fn.Return<TCustom>>
+  F extends CustomPromisify<infer TCustom>
+    ? UnwrapPromise<ReturnType<TCustom>>
     : never
 >;
 
