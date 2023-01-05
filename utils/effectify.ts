@@ -86,3 +86,67 @@ export function effectify(fn: Function) {
       });
     });
 }
+
+export function effectifyMapError<
+  X extends Fn,
+  F extends CustomPromisify<X>,
+  E2,
+  Cb = Last<Parameters<F>>,
+  E1 = Cb extends Function ? NonNullable<Parameters<Cb>[0]> : never
+>(
+  fn: F,
+  mapError: (e: E1) => E2
+): (
+  ...args: F extends CustomPromisify<infer TCustom>
+    ? Parameters<TCustom>
+    : never[]
+) => Z.Effect<
+  never,
+  E2,
+  F extends CustomPromisify<infer TCustom>
+    ? UnwrapPromise<ReturnType<TCustom>>
+    : never
+>;
+
+export function effectifyMapError<E1, E2, A>(
+  fn: (cb: Callback<E1, A>) => void,
+  mapError: (e: NonNullable<E1>) => E2
+): () => Z.Effect<never, E2, A>;
+
+export function effectifyMapError<E1, E2, A, X1>(
+  fn: (x1: X1, cb: Callback<E1, A>) => void,
+  mapError: (e: NonNullable<E1>) => E2
+): (x1: X1) => Z.Effect<never, E2, A>;
+
+export function effectifyMapError<E1, E2, A, X1, X2>(
+  fn: (x1: X1, x2: X2, cb: Callback<E1, A>) => void,
+  mapError: (e: NonNullable<E1>) => E2
+): (x1: X1, x2: X2) => Z.Effect<never, NonNullable<E2>, A>;
+
+export function effectifyMapError<E1, E2, A, X1, X2, X3>(
+  fn: (x1: X1, x2: X2, x3: X3, cb: Callback<E2, A>) => void,
+  mapError: (e: NonNullable<E1>) => E2
+): (x1: X1, x2: X2, x3: X3) => Z.Effect<never, E2, A>;
+
+export function effectifyMapError<E1, E2, A, X1, X2, X3, X4>(
+  fn: (x1: X1, x2: X2, x3: X3, x4: X4, cb: Callback<E1, A>) => void,
+  mapError: (e: NonNullable<E1>) => E2
+): (x1: X1, x2: X2, x3: X3, x4: X4) => Z.Effect<never, E2, A>;
+
+export function effectifyMapError<E1, E2, A, X1, X2, X3, X4, X5>(
+  fn: (x1: X1, x2: X2, x3: X3, x4: X4, x5: X5, cb: Callback<E1, A>) => void,
+  mapError: (e: NonNullable<E1>) => E2
+): (x1: X1, x2: X2, x3: X3, x4: X4, x5: X5) => Z.Effect<never, E2, A>;
+
+export function effectifyMapError(fn: Function, mapError: Function) {
+  return (...args: any[]) =>
+    Z.async<never, unknown, unknown>((resume) => {
+      fn(...args, (error: unknown, data: unknown) => {
+        if (error) {
+          resume(Z.fail(mapError(error)));
+        } else {
+          resume(Z.succeed(data));
+        }
+      });
+    });
+}
