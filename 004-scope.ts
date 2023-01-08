@@ -8,8 +8,8 @@ import { promisify } from "node:util";
 
 /* In this chapter we explore Scope.
  *
- * It is useful to understand Layer in the following chapter and since Scope
- * can be used on it's own without Layer, I decided to it made sense to
+ * It is useful to understand Layer in the following chapter, but since Scope
+ * can be used on it's own without Layer, I decided it made sense to
  * introduce it before Layer.
  *
  * What is Scope? It's a datatype to model the lifetime of resources.
