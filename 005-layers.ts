@@ -3,10 +3,11 @@ import * as Z from "@effect/io/Effect";
 import * as ZL from "@effect/io/Layer";
 import * as Scope from "@effect/io/Scope";
 import * as Exit from "@effect/io/Exit";
+import * as Context from "@fp-ts/data/Context";
 import * as fs from "node:fs";
 import { promisify } from "node:util";
 
-/* In 001-basic we saw a very simple example using Layers to handle dependency
+/* In 001-basic we saw a very simple example using Layer to handle dependency
  * injection. Here we build a realistic Layer example using Scope and Runtime
  * that you should be able to use in your own production application.
  *
@@ -80,7 +81,7 @@ export const FileDescriptorLive: ZL.Layer<never, never, FileDescriptor> =
 const makeAppRuntime = <R, E, A>(layer: ZL.Layer<R, E, A>) =>
   Z.gen(function* ($) {
     const scope = yield* $(Scope.make());
-    const env = yield* $(ZL.buildWithScope(scope)(layer));
+    const env: Context.Context<A> = yield* $(ZL.buildWithScope(scope)(layer));
     const runtime = yield* $(pipe(Z.runtime<A>(), Z.provideEnvironment(env)));
 
     return {
