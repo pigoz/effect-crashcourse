@@ -151,4 +151,41 @@ export const example5 = Z.gen(function* ($) {
  * 6
  */
 
-// TODO: raceApp, zipPar, errors
+export const example6 = Z.gen(function* ($) {
+  const winner = pipe(
+    Z.never(),
+    Z.raceAll(effects),
+    Z.map(_ => _.id),
+  );
+
+  console.log(yield* $(winner));
+});
+
+// Z.unsafeRunPromise(example6);
+
+/*
+ * fiber=#2 message="waked from 2"
+ * 2
+ */
+
+export const example7 = Z.gen(function* ($) {
+  const identifiers = pipe(
+    [7, 8, 9],
+    Z.forEachPar(x => sleeper(x)), // Effect<never, never, Chunk<Identifier>>
+    Z.map(Chunk.map(_ => _.id.toString())), // Effect<never, never, Chunk<string>>
+    Z.map(Chunk.join(",")), // Effect<never, never, string>
+  );
+
+  console.log(yield* $(identifiers));
+});
+
+// Z.unsafeRunPromise(example7);
+
+/*
+ * fiber=#1 message="waked from 7"
+ * fiber=#2 message="waked from 8"
+ * fiber=#3 message="waked from 9"
+ * 7,8,9
+ */
+
+// TODO: zipPar? errors
