@@ -10,13 +10,13 @@ import { decode } from "utils/decode";
 const fetchGist = (id: string) =>
   Z.tryCatchPromise(
     () => fetch(`https://api.github.com/gists/${id}`),
-    () => "fetch" as const
+    () => "fetch" as const,
   );
 
 const getJson = (res: Response) =>
   Z.tryCatchPromise(
     () => res.json() as Promise<unknown>, // Promise<any> otherwise
-    () => "json" as const
+    () => "json" as const,
   );
 
 const GistDecoder = z.object({
@@ -28,7 +28,7 @@ const GistDecoder = z.object({
       type: z.string(),
       language: z.string(),
       raw_url: z.string(),
-    })
+    }),
   ),
 });
 
@@ -47,7 +47,7 @@ const program = pipe(
   Z.map(decode<Gist>(GistDecoder)),
 
   // Z.Effect<never, 'fetch' | 'json' | ZodError, Gist>
-  Z.flatMap(Z.fromEither)
+  Z.flatMap(Z.fromEither),
 );
 
-Z.unsafeRunPromise(program).then((x) => console.log("decoded gist", x));
+Z.unsafeRunPromise(program).then(x => console.log("decoded gist", x));

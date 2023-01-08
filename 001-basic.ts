@@ -45,15 +45,15 @@ function eitherFromRandom(random: number): E.Either<"fail", number> {
 export const x = pipe(
   Z.sync(() => Math.random()), // Z.Effect<never, never, number>
   Z.map(eitherFromRandom), // Z.Effect<never, never, Either<'fail', number>>
-  Z.flatMap(Z.fromEither) // Z.Effect<never, 'fail', number>
+  Z.flatMap(Z.fromEither), // Z.Effect<never, 'fail', number>
 );
 
 // Same thing but using the number generator provided by Effect
 export const y = pipe(
   Z.random(), // Z.Effect<never, never, Random>
-  Z.flatMap((random) => random.next()), // Z.Effect<never, never, number>
+  Z.flatMap(random => random.next()), // Z.Effect<never, never, number>
   Z.map(eitherFromRandom), // Z.Effect<never, never, Either<'fail', number>>
-  Z.absolve // Z.Effect<never, 'fail', number>
+  Z.absolve, // Z.Effect<never, 'fail', number>
 );
 
 /* NOTE:
@@ -93,9 +93,9 @@ export const CustomRandom = Context.Tag<CustomRandom>();
 
 export const w = pipe(
   Z.service(CustomRandom), // Z.Effect<CustomRandom, never, CustomRandom>
-  Z.map((random) => random.next()), // Z.Effect<never, never, number>
+  Z.map(random => random.next()), // Z.Effect<never, never, number>
   Z.map(eitherFromRandom), // Z.Effect<never, never, Either<'fail', number>>
-  Z.absolve // Z.Effect<never, 'fail', number>
+  Z.absolve, // Z.Effect<never, 'fail', number>
 );
 
 /*
@@ -121,20 +121,20 @@ export const w = pipe(
 // (handy for Effects that depend on a single service)
 export const ws = pipe(
   w,
-  Z.provideService(CustomRandom)({ next: Math.random })
+  Z.provideService(CustomRandom)({ next: Math.random }),
 );
 
 // Providing an implementaion with provideEnvironment
 // (handy for Effects that depend on multiple services)
 const env = pipe(
   Context.empty(),
-  Context.add(CustomRandom)({ next: Math.random })
+  Context.add(CustomRandom)({ next: Math.random }),
   // Context.add(Foo)({ foo: 'foo' })
 );
 
 export const we = pipe(
   w, // Z.Effect<CustomRandom, 'fail', number>
-  Z.provideEnvironment(env) // Z.Effect<never, 'fail', number>
+  Z.provideEnvironment(env), // Z.Effect<never, 'fail', number>
 );
 
 // Providing an implementaion with layers

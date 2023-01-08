@@ -2,6 +2,7 @@ import * as Z from "@effect/io/Effect";
 import * as Exit from "@effect/io/Exit";
 import * as Fiber from "@effect/io/Fiber";
 
+import * as ReadonlyArray from "@fp-ts/data/ReadonlyArray";
 import * as Chunk from "@fp-ts/data/Chunk";
 import * as Duration from "@fp-ts/data/Duration";
 import { pipe } from "@fp-ts/data/Function";
@@ -25,7 +26,7 @@ const sleeper = (id: number, seconds = 1000) => {
   return pipe(
     Z.sleep(Duration.millis(seconds)),
     Z.tap(() => Z.logInfo(`waked from ${identifier.id}`)),
-    Z.flatMap(() => Z.succeed(identifier))
+    Z.flatMap(() => Z.succeed(identifier)),
   );
 };
 
@@ -60,7 +61,7 @@ const longFailing = (id: Identifier) =>
     Z.sleep(Duration.seconds(1)),
     Z.flatMap(() => Z.fail("blah" as const)),
     Z.tap(() => Z.logInfo(`waked from ${id.id}`)),
-    Z.flatMap(() => Z.succeed(id))
+    Z.flatMap(() => Z.succeed(id)),
   );
 
 /*
@@ -107,9 +108,9 @@ export const example4 = Z.gen(function* ($) {
   console.log(
     pipe(
       ids,
-      Chunk.map((_) => _.id),
-      Chunk.toReadonlyArray
-    )
+      Chunk.map(_ => _.id),
+      Chunk.toReadonlyArray,
+    ),
   );
 });
 
@@ -123,18 +124,22 @@ export const example4 = Z.gen(function* ($) {
  */
 
 export const example5 = Z.gen(function* ($) {
-  const xs = effects.map((effect) =>
-    pipe(
-      effect,
-      Z.map((_) => _.id)
-    )
-  );
-  const x = pipe(
-    xs,
-    Z.reduceAllPar(Z.succeed(0), (acc, a) => acc + a)
+  const identifiers: readonly Z.Effect<never, never, number>[] = pipe(
+    effects,
+    ReadonlyArray.map(effect =>
+      pipe(
+        effect,
+        Z.map(_ => _.id),
+      ),
+    ),
   );
 
-  console.log(yield* $(x));
+  const sum = pipe(
+    identifiers,
+    Z.reduceAllPar(Z.succeed(0), (acc, a) => acc + a),
+  );
+
+  console.log(yield* $(sum));
 });
 
 // Z.unsafeRunPromise(example5);

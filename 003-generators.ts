@@ -33,22 +33,22 @@ export const Bar = Context.Tag<Bar>();
 type hell = Z.Effect<CustomRandom | Foo | Bar, never, "hell">;
 export const hell: hell = pipe(
   Z.service(CustomRandom),
-  Z.flatMap((random) =>
+  Z.flatMap(random =>
     pipe(
       Z.service(Foo),
-      Z.flatMap((foo) =>
+      Z.flatMap(foo =>
         pipe(
           Z.service(Bar),
-          Z.flatMap((bar) =>
+          Z.flatMap(bar =>
             Z.sync(() => {
               console.log("please stop!!!", random.next(), foo.foo, bar.bar);
               return "hell" as const;
-            })
-          )
-        )
-      )
-    )
-  )
+            }),
+          ),
+        ),
+      ),
+    ),
+  ),
 );
 
 /*
@@ -62,8 +62,8 @@ export const purgatory: purgatory = pipe(
     Z.sync(() => {
       console.log("not as bad!", random.next(), foo.foo, bar.bar);
       return "purgatory" as const;
-    })
-  )
+    }),
+  ),
 );
 
 /*

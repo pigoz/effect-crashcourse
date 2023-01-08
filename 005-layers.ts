@@ -39,14 +39,14 @@ export const resource: Z.Effect<Scope.Scope, never, FileDescriptor> =
   Z.acquireRelease(
     pipe(
       Z.promise(() => promisify(fs.open)("/dev/null", "w")),
-      Z.map((fd) => ({ fd })),
-      Z.tap(() => Z.logInfo("FileDescriptor acquired"))
+      Z.map(fd => ({ fd })),
+      Z.tap(() => Z.logInfo("FileDescriptor acquired")),
     ),
     ({ fd }) =>
       pipe(
         Z.promise(() => promisify(fs.close)(fd)),
-        Z.tap(() => Z.logInfo("FileDescriptor released"))
-      )
+        Z.tap(() => Z.logInfo("FileDescriptor released")),
+      ),
   );
 
 /*
@@ -98,7 +98,7 @@ type AppLayer = Foo | Bar | FileDescriptor;
 const appLayerLive: ZL.Layer<never, never, AppLayer> = pipe(
   FooLive,
   ZL.provideToAndMerge(BarLive),
-  ZL.provideToAndMerge(FileDescriptorLive)
+  ZL.provideToAndMerge(FileDescriptorLive),
 );
 
 /*

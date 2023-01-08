@@ -12,7 +12,7 @@ export class ReadFileError {
 
 export const readFile = effectifyMapError(
   fs.readFile,
-  (e) => new ReadFileError(e)
+  e => new ReadFileError(e),
 );
 
 type CustomPromisifySymbolExample = {
@@ -31,9 +31,9 @@ const y = effectify(foo);
 Z.unsafeRunPromise(
   pipe(
     readFile("dadaasd"),
-    Z.map((x) => x.toString().split("\n")),
-    Z.map(ReadonlyArray.take(5))
-  )
+    Z.map(x => x.toString().split("\n")),
+    Z.map(ReadonlyArray.take(5)),
+  ),
 )
-  .then((x) => console.log(x))
-  .catch((x) => console.error(x));
+  .then(x => console.log(x))
+  .catch(x => console.error(x));

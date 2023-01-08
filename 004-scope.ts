@@ -58,14 +58,14 @@ export const resource: Z.Effect<Scope.Scope, never, FileDescriptor> =
   Z.acquireRelease(
     pipe(
       Z.promise(() => promisify(fs.open)("/dev/null", "w")),
-      Z.map((fd) => ({ fd })),
-      Z.tap(() => Z.logInfo("FileDescriptor acquired"))
+      Z.map(fd => ({ fd })),
+      Z.tap(() => Z.logInfo("FileDescriptor acquired")),
     ),
     ({ fd }) =>
       pipe(
         Z.promise(() => promisify(fs.close)(fd)),
-        Z.tap(() => Z.logInfo("FileDescriptor released"))
-      )
+        Z.tap(() => Z.logInfo("FileDescriptor released")),
+      ),
   );
 
 /*
@@ -97,13 +97,13 @@ export const useFileDescriptorStupid: useFileDescriptor = Z.gen(function* ($) {
  */
 export const useFileDescriptorSmarter: useFileDescriptor = Z.acquireUseRelease(
   Scope.make(),
-  (scope) =>
+  scope =>
     pipe(
       resource,
-      Z.tap((_) => Z.logInfo(`useFileDescriptorSmarter ${_.fd}`)),
-      Z.provideService(Scope.Tag)(scope)
+      Z.tap(_ => Z.logInfo(`useFileDescriptorSmarter ${_.fd}`)),
+      Z.provideService(Scope.Tag)(scope),
     ),
-  (scope) => Scope.close(Exit.unit())(scope)
+  scope => Scope.close(Exit.unit())(scope),
 );
 
 /* While the first example didn't have any error handling, this has the added
@@ -120,8 +120,8 @@ export const useFileDescriptorSmarter: useFileDescriptor = Z.acquireUseRelease(
  */
 export const useFileDescriptor: useFileDescriptor = pipe(
   resource,
-  Z.tap((_) => Z.logInfo(`useFileDescriptor ${_.fd}`)),
-  Z.scoped
+  Z.tap(_ => Z.logInfo(`useFileDescriptor ${_.fd}`)),
+  Z.scoped,
 );
 
 Z.unsafeRunPromise(useFileDescriptor);
@@ -152,7 +152,7 @@ Z.unsafeRunPromise(useFileDescriptor);
 export const myAcquireUseRelease = <R, E, A, R2, E2, A2, R3, X>(
   acquire: Z.Effect<R, E, A>,
   use: (a: A) => Z.Effect<R2, E2, A2>,
-  release: (a: A, exit: Exit.Exit<unknown, unknown>) => Z.Effect<R3, never, X>
+  release: (a: A, exit: Exit.Exit<unknown, unknown>) => Z.Effect<R3, never, X>,
 ) => pipe(Z.acquireRelease(acquire, release), Z.flatMap(use), Z.scoped);
 
 /*
@@ -164,8 +164,8 @@ export const myAcquireUseRelease = <R, E, A, R2, E2, A2, R3, X>(
 export const writeSomethingToDevNull = (something: string) =>
   Z.acquireUseRelease(
     Z.promise(() => promisify(fs.open)("/dev/null", "w")),
-    (fd) => Z.promise(() => promisify(fs.writeFile)(fd, something)),
-    (fd) => Z.promise(() => promisify(fs.close)(fd))
+    fd => Z.promise(() => promisify(fs.writeFile)(fd, something)),
+    fd => Z.promise(() => promisify(fs.close)(fd)),
   );
 
 /*
