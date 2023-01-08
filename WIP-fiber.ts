@@ -153,8 +153,8 @@ export const example5 = Z.gen(function* ($) {
 
 export const example6 = Z.gen(function* ($) {
   const winner = pipe(
-    Z.never(),
-    Z.raceAll(effects),
+    Z.never(), // Effect<never, never, never> (never returns)
+    Z.raceAll(effects), // Races effects with Z.never()
     Z.map(_ => _.id),
   );
 
@@ -187,5 +187,3 @@ export const example7 = Z.gen(function* ($) {
  * fiber=#3 message="waked from 9"
  * 7,8,9
  */
-
-// TODO: zipPar? errors
