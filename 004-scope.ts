@@ -17,7 +17,9 @@ import { promisify } from "node:util";
  * In practice it is a collection of finalizers. It has 3 main methods:
  *
  *  - addFinalizer: adds a new finalizer to the Scope
- *      (a finalizer is an Effect! turtles, amiright?)
+ *
+ *    A finalizer is an effect to be run when the Scope is closed, somewhat
+ *    like a destructor in OOP
  *
  *  - close: closes the Scope executing all the finalizers that were added to it
  *
@@ -28,7 +30,12 @@ import { promisify } from "node:util";
 /* We mentioned resources above. So the new question becomes: what is a resource?
  *
  * They are also known as "scoped effect" in the Effect docs, or "scoped value"
- * in the ZIO docs.
+ * in the ZIO docs. They are effects that require a Scope to run.
+ *
+ * In types they look like this:
+ *
+ *  Z.Effect<Scope.Scope, DatabaseConnectionError, DatabaseConnection>
+ *
  *
  * The most common way to create a "scoped effect" is the `acquireRelease`
  * function.
