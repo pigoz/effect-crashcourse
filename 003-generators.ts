@@ -68,12 +68,11 @@ export const purgatory: purgatory = pipe(
 
 /*
  * But you would still end up with messy code in real application code,
- * not to mention testing code! Library code actuall works well with the pipe
- * API.
+ * not to mention testing code! OTOH being very generic, library code actually
+ * tends to work quite well with the pipe API.
  *
- * Anyway, since Effect is made to make your life easier as an application
- * developer, the team came up with an API that uses generators to flatten
- * the flatmap callback hell.
+ * To address this issue, the Effect team came up with an API that uses
+ * generators to flatten the flatmap callback hell.
  */
 type paradise = Z.Effect<CustomRandom | Foo | Bar, never, "paradise">;
 export const paradise: paradise = Z.gen(function* ($) {
@@ -122,6 +121,11 @@ export const paradiseErr: paradiseErr = Z.gen(function* ($) {
   "Gen Function $ (wrapped)": {
     "prefix": "zgen$",
     "body": ["Z.gen(function* ($) {\n\t$0\n})"],
+    "description": "Generator function with $ input"
+  },
+  "Gen Function $ (wrapped)": {
+    "prefix": "egen$",
+    "body": ["Effect.gen(function* ($) {\n\t$0\n})"],
     "description": "Generator function with $ input"
   },
   "Gen Yield $": {
