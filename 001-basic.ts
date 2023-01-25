@@ -11,10 +11,9 @@ import * as Context from "@fp-ts/data/Context";
  * It is a type that models a potentially async computation.
  * The computation has inputs (R), can fail (E) or succeed (A).
  *
- * You can think of Z.Effect<R, E, A> as equivalent to
- *   (r: R) => Promise<Either<E, A>>
- * or
- *   (r: R) => TaskEither<E, A> (in fp-ts 2)
+ * You can think of Z.Effect<R, E, A> as equivalent to:
+ *
+ *   (r: R) => Promise<Either<E, A>> | Either<E, A>
  *
  *  - R is the computation requirements
  *  - E is the type of the error in case the computation fails
