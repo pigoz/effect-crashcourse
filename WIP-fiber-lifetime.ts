@@ -5,7 +5,7 @@ import * as Supervisor from "@effect/io/Supervisor";
 import * as Scope from "@effect/io/Scope";
 import * as Chunk from "@fp-ts/data/Chunk";
 import * as Exit from "@effect/io/Exit";
-import { pipe } from "@fp-ts/data/Function";
+import { pipe } from "@fp-ts/core/Function";
 
 /*
  * In the previous chapter we saw how to introduce concurrency using Fiber.
@@ -46,7 +46,7 @@ export const example0 = Z.gen(function* ($) {
   // console.log(yield* $(fiber));
 });
 
-Z.unsafeRunPromise(example0);
+Z.runPromise(example0);
 
 export const example1 = Z.gen(function* ($) {
   yield* $(Z.forkDaemon(slow));
@@ -54,7 +54,7 @@ export const example1 = Z.gen(function* ($) {
   yield* $(Z.logInfo("done"));
 });
 
-// Z.unsafeRunPromise(example1);
+// Z.runPromise(example1);
 
 /*
  * This will print the running message 5 times
@@ -73,7 +73,7 @@ export const example2 = Z.gen(function* ($) {
   yield* $(Fiber.interrupt(fiber));
 });
 
-// Z.unsafeRunPromise(example2);
+// Z.runPromise(example2);
 /*
  * fiber=#1 message="slow task running"
  * fiber=#1 message="slow task running"
@@ -88,7 +88,7 @@ export const example3 = Z.gen(function* ($) {
   yield* $(Fiber.join(fiber));
 });
 
-// Z.unsafeRunPromise(example3).catch(e => console.log(e));
+// Z.runPromise(example3).catch(e => console.log(e));
 
 /*
  * boom

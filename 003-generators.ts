@@ -1,4 +1,4 @@
-import { pipe } from "@fp-ts/data/Function";
+import { pipe } from "@fp-ts/core/Function";
 import * as Z from "@effect/io/Effect";
 import * as Context from "@fp-ts/data/Context";
 

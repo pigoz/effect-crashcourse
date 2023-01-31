@@ -1,4 +1,4 @@
-import { pipe } from "@fp-ts/data/Function";
+import { pipe } from "@fp-ts/core/Function";
 import * as Z from "@effect/io/Effect";
 import { z } from "zod"; // waiting patiently for @fp-ts/schema
 import { decode } from "utils/decode";
@@ -50,4 +50,4 @@ const program = pipe(
   Z.flatMap(Z.fromEither),
 );
 
-Z.unsafeRunPromise(program).then(x => console.log("decoded gist", x));
+Z.runPromise(program).then(x => console.log("decoded gist", x));

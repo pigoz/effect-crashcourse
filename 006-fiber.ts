@@ -2,10 +2,10 @@ import * as Z from "@effect/io/Effect";
 import * as Exit from "@effect/io/Exit";
 import * as Fiber from "@effect/io/Fiber";
 
-import * as ReadonlyArray from "@fp-ts/data/ReadonlyArray";
+import * as ReadonlyArray from "@fp-ts/core/ReadonlyArray";
 import * as Chunk from "@fp-ts/data/Chunk";
 import * as Duration from "@fp-ts/data/Duration";
-import { pipe } from "@fp-ts/data/Function";
+import { pipe } from "@fp-ts/core/Function";
 
 /*
  * Until now we executed effects in a way that made them look synchronous.
@@ -43,7 +43,7 @@ export const example1 = Z.gen(function* ($) {
   yield* $(Z.logInfo(JSON.stringify(id)));
 });
 
-// Z.unsafeRunPromise(example1);
+// Z.runPromise(example1);
 
 /*
  * Running it yields:
@@ -73,7 +73,7 @@ export const example2 = Z.gen(function* ($) {
   (yield* $(Fiber.join(fiber))) satisfies Identifier;
 });
 
-// Z.unsafeRunPromise(example2).catch(x => console.log('error', x));
+// Z.runPromise(example2).catch(x => console.log('error', x));
 
 /*
  * An alternative is using wait which gives an Exit back
@@ -114,7 +114,7 @@ export const example4 = Z.gen(function* ($) {
   );
 });
 
-// Z.unsafeRunPromise(example4);
+// Z.runPromise(example4);
 
 /*
  * fiber=#2 message="waked from 2"
@@ -142,7 +142,7 @@ export const example5 = Z.gen(function* ($) {
   console.log(yield* $(sum));
 });
 
-// Z.unsafeRunPromise(example5);
+// Z.runPromise(example5);
 
 /*
  * fiber=#2 message="waked from 2"
@@ -153,7 +153,6 @@ export const example5 = Z.gen(function* ($) {
 
 export const example6 = Z.gen(function* ($) {
   const winner = pipe(
-    Z.never(), // Effect<never, never, never> (never returns)
     Z.raceAll(effects), // Races effects with Z.never()
     Z.map(_ => _.id),
   );
@@ -161,7 +160,7 @@ export const example6 = Z.gen(function* ($) {
   console.log(yield* $(winner));
 });
 
-// Z.unsafeRunPromise(example6);
+// Z.runPromise(example6);
 
 /*
  * fiber=#2 message="waked from 2"
@@ -179,7 +178,7 @@ export const example7 = Z.gen(function* ($) {
   console.log(yield* $(identifiers));
 });
 
-// Z.unsafeRunPromise(example7);
+// Z.runPromise(example7);
 
 /*
  * fiber=#1 message="waked from 7"

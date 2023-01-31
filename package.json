@@ -10,8 +10,9 @@
   "author": "",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@effect/io": "^0.0.32",
-    "@fp-ts/data": "^0.0.22",
+    "@effect/io": "^0.1.4",
+    "@fp-ts/core": "^0.1.1",
+    "@fp-ts/data": "^0.1.1",
     "@types/debug": "^4.1.7",
     "debug": "^4.3.4",
     "ts-toolbelt": "^9.6.0",
@@ -19,6 +20,7 @@
     "zod": "^3.19.1"
   },
   "devDependencies": {
+    "@types/node": "^18.11.18",
     "prettier": "^2.8.2",
     "tsx": "^3.12.2"
   }

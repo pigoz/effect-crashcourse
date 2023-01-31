@@ -1,6 +1,6 @@
-import { pipe } from "@fp-ts/data/Function";
+import { pipe } from "@fp-ts/core/Function";
 import { effectify, effectifyMapError } from "utils/effectify";
-import * as ReadonlyArray from "@fp-ts/data/ReadonlyArray";
+import * as ReadonlyArray from "@fp-ts/core/ReadonlyArray";
 import * as Z from "@effect/io/Effect";
 import * as fs from "node:fs";
 import { promisify } from "node:util";
@@ -28,7 +28,7 @@ const x = effectify(customSymbol);
 
 const y = effectify(foo);
 
-Z.unsafeRunPromise(
+Z.runPromise(
   pipe(
     readFile("dadaasd"),
     Z.map(x => x.toString().split("\n")),

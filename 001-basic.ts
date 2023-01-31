@@ -1,5 +1,5 @@
-import { pipe } from "@fp-ts/data/Function";
-import * as E from "@fp-ts/data/Either";
+import { pipe } from "@fp-ts/core/Function";
+import * as E from "@fp-ts/core/Either";
 import * as Z from "@effect/io/Effect";
 import * as ZL from "@effect/io/Layer";
 import * as Context from "@fp-ts/data/Context";
@@ -69,7 +69,7 @@ export const y = pipe(
  * do (using map, flatMap, etc), and then execute them.
  */
 
-Z.unsafeRunPromise(y); // executes y
+Z.runPromise(y); // executes y
 
 /* Suppose we want to implement our own custom random generator, and use it in
  * our code as a dependency, similarly to how we used the one provided by
@@ -101,7 +101,7 @@ export const w = pipe(
  * The cool thing is the CustomRandom we defined as a requirement of `w`
  * doesn't have an implementation.
  *
- * Z.unsafeRunPromise(w);
+ * Z.runPromise(w);
  *
  * Would lead to the following type error:
  *
@@ -120,26 +120,26 @@ export const w = pipe(
 // (handy for Effects that depend on a single service)
 export const ws = pipe(
   w,
-  Z.provideService(CustomRandom)({ next: Math.random }),
+  Z.provideService(CustomRandom, { next: Math.random }),
 );
 
 // Providing an implementaion with provideEnvironment
 // (handy for Effects that depend on multiple services)
-const env = pipe(
+const ctx = pipe(
   Context.empty(),
-  Context.add(CustomRandom)({ next: Math.random }),
+  Context.add(CustomRandom, { next: Math.random }),
   // Context.add(Foo)({ foo: 'foo' })
 );
 
 export const we = pipe(
   w, // Z.Effect<CustomRandom, 'fail', number>
-  Z.provideEnvironment(env), // Z.Effect<never, 'fail', number>
+  Z.provideContext(ctx), // Z.Effect<never, 'fail', number>
 );
 
 // Providing an implementaion with layers
 // (handy for real world systems with complex dependency trees)
 // (will go more in depth about layers in a future guide)
-export const CustomRandomLive = ZL.succeed(CustomRandom)({ next: Math.random });
+export const CustomRandomLive = ZL.succeed(CustomRandom, { next: Math.random });
 
 export const wl = pipe(w, Z.provideLayer(CustomRandomLive));
 
@@ -149,4 +149,4 @@ export const wl = pipe(w, Z.provideLayer(CustomRandomLive));
  *
  * This can be useful for i.e. mocking:
  */
-export const wt = pipe(w, Z.provideService(CustomRandom)({ next: () => 0.3 }));
+export const wt = pipe(w, Z.provideService(CustomRandom, { next: () => 0.3 }));

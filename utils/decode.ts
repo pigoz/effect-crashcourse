@@ -1,4 +1,4 @@
-import * as E from "@fp-ts/data/Either";
+import * as E from "@fp-ts/core/Either";
 import { z } from "zod";
 
 export function decode<T>(schema: z.ZodSchema<T>) {

@@ -1,8 +1,9 @@
-import { pipe } from "@fp-ts/data/Function";
+import { pipe } from "@fp-ts/core/Function";
 import * as Z from "@effect/io/Effect";
 import * as ZL from "@effect/io/Layer";
 import * as Scope from "@effect/io/Scope";
 import * as Exit from "@effect/io/Exit";
+import * as Runtime from "@effect/io/Runtime";
 import * as Context from "@fp-ts/data/Context";
 import * as fs from "node:fs";
 import { promisify } from "node:util";
@@ -31,8 +32,8 @@ const program2 = Z.gen(function* ($) {
 });
 
 // These are stupid Layers with no lifetime
-const FooLive = ZL.succeed(Foo)({ foo: 4 });
-const BarLive = ZL.succeed(Bar)({ bar: 2 });
+const FooLive = ZL.succeed(Foo, { foo: 4 });
+const BarLive = ZL.succeed(Bar, { bar: 2 });
 
 // This is the exact same "scoped effect" we defined in 004-scope to manage a
 // FileDescriptor lifetime!
@@ -69,7 +70,7 @@ export const resource: Z.Effect<Scope.Scope, never, FileDescriptor> =
  * the release effect to the Scope with addFinalizer).
  */
 export const FileDescriptorLive: ZL.Layer<never, never, FileDescriptor> =
-  ZL.scoped(FileDescriptor)(resource);
+  ZL.scoped(FileDescriptor, resource);
 
 /* This next part is the final glue code needed and is platform specific.
  * We assume a Node environment.
@@ -81,12 +82,12 @@ export const FileDescriptorLive: ZL.Layer<never, never, FileDescriptor> =
 const makeAppRuntime = <R, E, A>(layer: ZL.Layer<R, E, A>) =>
   Z.gen(function* ($) {
     const scope = yield* $(Scope.make());
-    const env: Context.Context<A> = yield* $(ZL.buildWithScope(scope)(layer));
-    const runtime = yield* $(pipe(Z.runtime<A>(), Z.provideEnvironment(env)));
+    const ctx: Context.Context<A> = yield* $(ZL.buildWithScope(scope)(layer));
+    const runtime = yield* $(pipe(Z.runtime<A>(), Z.provideContext(ctx)));
 
     return {
       runtime,
-      close: Scope.close(Exit.unit())(scope),
+      close: Scope.close(scope, Exit.unit()),
     };
   });
 
@@ -98,14 +99,14 @@ type AppLayer = Foo | Bar | FileDescriptor;
 
 const appLayerLive: ZL.Layer<never, never, AppLayer> = pipe(
   FooLive,
-  ZL.provideToAndMerge(BarLive),
-  ZL.provideToAndMerge(FileDescriptorLive),
+  ZL.provideMerge(BarLive),
+  ZL.provideMerge(FileDescriptorLive),
 );
 
 /*
  * We create a runtime and the close effect
  */
-const promise = Z.unsafeRunPromise(makeAppRuntime(appLayerLive));
+const promise = Z.runPromise(makeAppRuntime(appLayerLive));
 
 promise.then(({ runtime, close }) => {
   /*
@@ -113,15 +114,15 @@ promise.then(({ runtime, close }) => {
    * on node's exit. This will run the release Effect for all the resources in
    * our AppLayer.
    */
-  process.on("beforeExit", () => Z.unsafeRunPromise(close));
+  process.on("beforeExit", () => Z.runPromise(close));
 
   /*
    * Finally, we can run the effects reusing resources. In a webapp these could
    * be requests.
    */
-  runtime.unsafeRunPromise(program1);
-  runtime.unsafeRunPromise(program2);
-  runtime.unsafeRunPromise(program2);
+  Runtime.runPromise(runtime)(program1);
+  Runtime.runPromise(runtime)(program2);
+  Runtime.runPromise(runtime)(program2);
 });
 
 /* prints out:

@@ -1,4 +1,4 @@
-import { pipe } from "@fp-ts/data/Function";
+import { pipe } from "@fp-ts/core/Function";
 import * as Z from "@effect/io/Effect";
 import * as Scope from "@effect/io/Scope";
 import * as Exit from "@effect/io/Exit";
@@ -88,9 +88,9 @@ type useFileDescriptor = Z.Effect<never, never, void>;
 
 export const useFileDescriptorStupid: useFileDescriptor = Z.gen(function* ($) {
   const scope = yield* $(Scope.make());
-  const fd = yield* $(pipe(resource, Z.provideService(Scope.Tag)(scope)));
+  const fd = yield* $(pipe(resource, Z.provideService(Scope.Tag, scope)));
   yield* $(Z.logInfo(`useFileDescriptorStupid ${fd}`));
-  yield* $(Scope.close(Exit.unit())(scope));
+  yield* $(Scope.close(scope, Exit.unit()));
 });
 
 /* If you look closely at it, the previous code can be split in 3 steps:
@@ -108,9 +108,9 @@ export const useFileDescriptorSmarter: useFileDescriptor = Z.acquireUseRelease(
     pipe(
       resource,
       Z.tap(_ => Z.logInfo(`useFileDescriptorSmarter ${_.fd}`)),
-      Z.provideService(Scope.Tag)(scope),
+      Z.provideService(Scope.Tag, scope),
     ),
-  scope => Scope.close(Exit.unit())(scope),
+  scope => Scope.close(scope, Exit.unit()),
 );
 
 /* While the first example didn't have any error handling, this has the added
@@ -131,9 +131,9 @@ export const useFileDescriptor: useFileDescriptor = pipe(
   Z.scoped,
 );
 
-Z.unsafeRunPromise(useFileDescriptor);
+Z.runPromise(useFileDescriptor);
 
-/* Z.unsafeRunPromise(useFileDescriptor); will print something like:
+/* Z.runPromise(useFileDescriptor); will print something like:
  *
  * FileDescriptor acquired { fd: 22 }
  * useFileDescriptor { fd: 22 }
