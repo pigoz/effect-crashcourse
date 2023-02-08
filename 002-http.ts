@@ -1,6 +1,7 @@
 import { pipe } from "@fp-ts/core/Function";
 import * as Z from "@effect/io/Effect";
 import * as S from "@fp-ts/schema";
+import { decode } from "./utils/decode";
 
 /*
  * The most iconic asynchronous example in JavaScript is fetching from APIs.
@@ -43,10 +44,12 @@ const program = pipe(
   Z.flatMap(getJson),
 
   // Z.Effect<never, 'fetch' | 'json', Either<ZodError, Gist>>
-  Z.map(S.decode<Gist>(GistSchema)),
+  Z.map(decode<Gist>(GistSchema)),
 
   // Z.Effect<never, 'fetch' | 'json' | ZodError, Gist>
   Z.flatMap(Z.fromEither),
 );
 
-Z.runPromise(program).then(x => console.log("decoded gist", x));
+Z.runPromise(program)
+  .then(x => console.log("decoded gist %o", x))
+  .catch(err => console.error(err));
