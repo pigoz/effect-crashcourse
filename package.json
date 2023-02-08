@@ -14,8 +14,7 @@
     "@types/debug": "^4.1.7",
     "debug": "^4.3.4",
     "ts-toolbelt": "^9.6.0",
-    "typescript": "^4.9.3",
-    "zod": "^3.19.1"
+    "typescript": "^4.9.3"
   },
   "devDependencies": {
     "@effect/data": "^0.0.1",

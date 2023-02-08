@@ -12,14 +12,12 @@ specifiers:
   ts-toolbelt: ^9.6.0
   tsx: ^3.12.2
   typescript: ^4.9.3
-  zod: ^3.19.1
 
 dependencies:
   '@types/debug': 4.1.7
   debug: 4.3.4
   ts-toolbelt: 9.6.0
   typescript: 4.9.5
-  zod: 3.20.3
 
 devDependencies:
   '@effect/data': 0.0.1
@@ -410,8 +408,4 @@ packages:
     resolution: {integrity: sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==}
     engines: {node: '>=4.2.0'}
     hasBin: true
-    dev: false
-
-  /zod/3.20.3:
-    resolution: {integrity: sha512-+MLeeUcLTlnzVo5xDn9+LVN9oX4esvgZ7qfZczBN+YVUvZBafIrPPVyG2WdjMWU2Qkb2ZAh2M8lpqf1wIoGqJQ==}
     dev: false
