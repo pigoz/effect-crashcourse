@@ -3,8 +3,8 @@ import * as Exit from "@effect/io/Exit";
 import * as Fiber from "@effect/io/Fiber";
 
 import * as ReadonlyArray from "@fp-ts/core/ReadonlyArray";
-import * as Chunk from "@fp-ts/data/Chunk";
-import * as Duration from "@fp-ts/data/Duration";
+import * as Chunk from "@effect/data/Chunk";
+import * as Duration from "@effect/data/Duration";
 import { pipe } from "@fp-ts/core/Function";
 
 /*

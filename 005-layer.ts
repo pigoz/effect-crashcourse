@@ -4,7 +4,7 @@ import * as ZL from "@effect/io/Layer";
 import * as Scope from "@effect/io/Scope";
 import * as Exit from "@effect/io/Exit";
 import * as Runtime from "@effect/io/Runtime";
-import * as Context from "@fp-ts/data/Context";
+import * as Context from "@effect/data/Context";
 import * as fs from "node:fs";
 import { promisify } from "node:util";
 

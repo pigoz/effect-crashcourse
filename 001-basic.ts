@@ -2,7 +2,7 @@ import { pipe } from "@fp-ts/core/Function";
 import * as E from "@fp-ts/core/Either";
 import * as Z from "@effect/io/Effect";
 import * as ZL from "@effect/io/Layer";
-import * as Context from "@fp-ts/data/Context";
+import * as Context from "@effect/data/Context";
 
 /* Effect is inspired by ZIO, the basic datatype is Effect
  *

@@ -1,9 +1,9 @@
 import * as Z from "@effect/io/Effect";
 import * as Fiber from "@effect/io/Fiber";
-import * as Duration from "@fp-ts/data/Duration";
+import * as Duration from "@effect/data/Duration";
 import * as Supervisor from "@effect/io/Supervisor";
 import * as Scope from "@effect/io/Scope";
-import * as Chunk from "@fp-ts/data/Chunk";
+import * as Chunk from "@effect/data/Chunk";
 import * as Exit from "@effect/io/Exit";
 import { pipe } from "@fp-ts/core/Function";
 
