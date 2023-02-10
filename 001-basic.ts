@@ -71,7 +71,38 @@ export const y = pipe(
 
 Z.runPromise(y); // executes y
 
-/* Suppose we want to implement our own custom random generator, and use it in
+/* As an alternative, instead of using eitherFromRandom and dealing with an
+ * Either that we later lift into an Effect, we can write that conditional
+ * Effect directly.
+ *
+ * Both are valid alternatives and the choice on which to use comes down to
+ * preference. You may have large subsystems which only depend on Option/Either
+ * and lift those into Effects later, or go with the Effect-native approach.
+ */
+
+function flakyEffectFromRandom(random: number) {
+  return Z.cond(
+    () => random > 0.5,
+    () => random,
+    () => "fail" as const,
+  );
+}
+
+export const y2 = pipe(
+  Z.random(), // Z.Effect<never, never, Random>
+  Z.flatMap(random => random.next()), // Z.Effect<never, never, number>
+  Z.flatMap(flakyEffectFromRandom), // Z.Effect<never, 'fail', number>
+);
+
+/* ###########################################################################
+ * Context
+ *
+ * Up until now we only dealt with Effects that have no dependencies.
+ *
+ * The R in Effect<R, E, A> has always been never, meaning that that Effect
+ * doesn't depend on anything.
+ *
+ * Suppose we want to implement our own custom random generator, and use it in
  * our code as a dependency, similarly to how we used the one provided by
  * Effect
  */
@@ -93,8 +124,7 @@ export const CustomRandom = Context.Tag<CustomRandom>();
 export const w = pipe(
   Z.service(CustomRandom), // Z.Effect<CustomRandom, never, CustomRandom>
   Z.map(random => random.next()), // Z.Effect<never, never, number>
-  Z.map(eitherFromRandom), // Z.Effect<never, never, Either<'fail', number>>
-  Z.absolve, // Z.Effect<never, 'fail', number>
+  Z.flatMap(flakyEffectFromRandom), // Z.Effect<never, 'fail', number>
 );
 
 /*
@@ -109,7 +139,7 @@ export const w = pipe(
  * to parameter of type 'Effect<never, "fail", number>'.
  * Type 'CustomRandom' is not assignable to type 'never'.
  *
- * So we can use provideService, provideEnvironment, provideLayer, to provide
+ * So we can use provideService, provideContext, provideLayer, to provide
  * and implementation.
  *
  * By providing an implementation, we turn the R in Effect<R, E, A> into a
@@ -123,7 +153,7 @@ export const ws = pipe(
   Z.provideService(CustomRandom, { next: Math.random }),
 );
 
-// Providing an implementaion with provideEnvironment
+// Providing an implementaion with provideContext
 // (handy for Effects that depend on multiple services)
 const ctx = pipe(
   Context.empty(),
