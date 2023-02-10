@@ -43,10 +43,10 @@ const program = pipe(
   // Z.Effect<never, 'fetch' | 'json', unknown>
   Z.flatMap(getJson),
 
-  // Z.Effect<never, 'fetch' | 'json', Either<ZodError, Gist>>
+  // Z.Effect<never, 'fetch' | 'json', Either<DecodeError, Gist>>
   Z.map(decode<Gist>(GistSchema)),
 
-  // Z.Effect<never, 'fetch' | 'json' | ZodError, Gist>
+  // Z.Effect<never, 'fetch' | 'json' | DecodeError, Gist>
   Z.flatMap(Z.fromEither),
 );
 
