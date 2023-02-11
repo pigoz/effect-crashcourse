@@ -123,8 +123,8 @@ export const CustomRandom = Context.Tag<CustomRandom>();
 
 export const w = pipe(
   Z.service(CustomRandom), // Z.Effect<CustomRandom, never, CustomRandom>
-  Z.map(random => random.next()), // Z.Effect<never, never, number>
-  Z.flatMap(flakyEffectFromRandom), // Z.Effect<never, 'fail', number>
+  Z.map(random => random.next()), // Z.Effect<CustomRandom, never, number>
+  Z.flatMap(flakyEffectFromRandom), // Z.Effect<CustomRandom, 'fail', number>
 );
 
 /*
