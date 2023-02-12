@@ -102,6 +102,22 @@ export const paradiseErr: paradiseErr = Z.gen(function* ($) {
 });
 
 /*
+ * Another option for avoiding callback hell is "Do notation".
+ * This lets you bind values/effects to names when using pipe without introducing more nesting.
+ */
+export const doNotation = pipe(
+  Z.Do(),
+  Z.bind("random", () => Z.service(CustomRandom)),
+  Z.bind("foo", () => Z.service(Foo)),
+  Z.bind("bar", () => Z.service(Bar)),
+  Z.flatMap(({ random, foo, bar }) =>
+    Z.sync(() =>
+      console.log("this is pretty cool!", random.next(), foo.foo, bar.bar),
+    ),
+  ),
+);
+
+/*
  * TLDR: With generators you can write Effect code that looks imperative!
  * It's an equivalent to what ZIO does in Scala-land with for comprehensions.
  *
