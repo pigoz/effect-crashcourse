@@ -103,7 +103,11 @@ export const paradiseErr: paradiseErr = Z.gen(function* ($) {
 
 /*
  * Another option for avoiding callback hell is "Do notation".
- * This lets you bind values/effects to names when using pipe without introducing more nesting.
+ * This lets you bind values/effects to names when using pipe without
+ * introducing more nesting.
+ *
+ * NOTE: when working with Effect streams, generators don't work. In those
+ * instances the Do notation the only option.
  */
 export const doNotation = pipe(
   Z.Do(),
