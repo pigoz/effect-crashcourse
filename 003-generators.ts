@@ -30,8 +30,7 @@ export const Bar = Context.Tag<Bar>();
  * (ndr: In the TaskEither example linked above you can see it in the chain usage)
  * (ndr2: the `hell` type is for documentation purposes, it's not actually needed)
  */
-type hell = Z.Effect<CustomRandom | Foo | Bar, never, "hell">;
-export const hell: hell = pipe(
+export const hell = pipe(
   Z.service(CustomRandom),
   Z.flatMap(random =>
     pipe(
@@ -55,13 +54,12 @@ export const hell: hell = pipe(
  * For an example so trivial we can actually still get away with the pipe based
  * API using the tuple combinator built in into Effect.
  */
-type purgatory = Z.Effect<CustomRandom | Foo | Bar, never, "purgatory">;
-export const purgatory: purgatory = pipe(
+export const tuple = pipe(
   Z.tuple(Z.service(CustomRandom), Z.service(Foo), Z.service(Bar)),
   Z.flatMap(([random, foo, bar]) =>
     Z.sync(() => {
       console.log("not as bad!", random.next(), foo.foo, bar.bar);
-      return "purgatory" as const;
+      return "tuple" as const;
     }),
   ),
 );
@@ -74,21 +72,19 @@ export const purgatory: purgatory = pipe(
  * To address this issue, the Effect team came up with an API that uses
  * generators to flatten the flatmap callback hell.
  */
-type paradise = Z.Effect<CustomRandom | Foo | Bar, never, "paradise">;
-export const paradise: paradise = Z.gen(function* ($) {
+export const generator = Z.gen(function* ($) {
   const random = yield* $(Z.service(CustomRandom));
   const foo = yield* $(Z.service(Foo));
   const bar = yield* $(Z.service(Bar));
 
   console.log("this is pretty cool!", random.next(), foo.foo, bar.bar);
-  return "paradise" as const;
+  return "generator" as const;
 });
 
 /* A legit question would be: How do you error out of a generator function?
  * Just yield a failing Effect
  */
-type paradiseErr = Z.Effect<CustomRandom | Foo | Bar, "bad random", "paradise">;
-export const paradiseErr: paradiseErr = Z.gen(function* ($) {
+export const generatorerr = Z.gen(function* ($) {
   const random = yield* $(Z.service(CustomRandom));
   const foo = yield* $(Z.service(Foo));
   const bar = yield* $(Z.service(Bar));
@@ -98,7 +94,7 @@ export const paradiseErr: paradiseErr = Z.gen(function* ($) {
   }
 
   console.log("this is pretty cool!", random.next(), foo.foo, bar.bar);
-  return "paradise" as const;
+  return "generator" as const;
 });
 
 /*
