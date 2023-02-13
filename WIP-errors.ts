@@ -2,9 +2,51 @@ import * as Z from "@effect/io/Effect";
 import * as Data from "@effect/data/Data";
 import { pipe } from "@fp-ts/core/Function";
 
-/* Until now we used 'somestring' as const in the failure channel
- * (E in Effect<R, E ,A>) of the example effects we built.
- * That was mainly for readability and to not introduce all the concepts at one.
+/*
+ * Effect (and ZIO) have 3 main types of errors:
+ *
+ * 1) Failure
+ * Generated using Z.fail and appears in the E type of Effect<R,E,A> (which is
+ * also known as the failure channel).
+ *
+ * These are also called 'expected errors' or 'typed errors' in ZIO,
+ * or 'recoverable errors' in the Effect docs.
+ *
+ * They are errors which the developer expects to happen, part of the domain,
+ * and part of the program's control flow.
+ *
+ * In spirit they are similar to checked exceptions.
+ *
+ * 2) Defect
+ * Generated using Z.die, they don't appear in the Effect<R,E,A> type.
+ *
+ * Also known as 'unexpected errors' or 'untyped errors' in ZIO, or
+ * 'unrecoverable errors' in the Effect docs. (NOTE: despite the name there
+ * are ways to recover from them but it's way more verbose compared to failures).
+ *
+ * These are unexpected errors which are not part of the domain, nor the
+ * control flow.
+ *
+ * While it doesn't appear in the type Effect<R,E,A>, the Effect runtime keeps
+ * track of these errors in a data structure called Cause (more on this later),
+ * and there are combinators that allow to access the Cause and analyze it.
+ *
+ * In spirit, similar to unchecked exceptions.
+ *
+ * 3) Interruption
+ * Generated with Effect.interrupt to interrupt the executing Fiber, or
+ * Fiber.interrupt(fiber) to interrupt `fiber`.
+ *
+ * An interruption will cause the fiber to return an Exit.Failure containing
+ * a Cause.interrupt. Will go more in depth in the Fiber chapters.
+ */
+
+/* Building Errors
+ * ===============
+ *
+ * Until now we used string literals in the failure channel of the example
+ * effects we built. That was mainly for readability and to not introduce all
+ * the concepts at one.
  *
  * In reality it's better to fail with an object that has a _tag field.
  * The reason being Effect comes with a few combinators built specifically to
@@ -57,14 +99,20 @@ export const isNotEqual = Equal.equals(
  * to perform comparison by value: Data.struct, Data.tuple, Data.array.
  */
 
-/* Let's move on and use the Errors we defined! :) */
+/*
+ * Recovering from failures
+ * ========================
+ *
+ * Let's move on and use the Errors we defined! :)
+ *
+ * Suppose we have some similar code with two possible failures
+ */
 
 function flaky() {
   return Math.random() > 0.5;
 }
 
-/* Suppose we has some similar code with two possible failures */
-export const a = pipe(
+export const example = pipe(
   Z.cond(
     flaky,
     () => "success1" as const,
@@ -77,7 +125,9 @@ export const a = pipe(
       () => new BarError("error2"),
     ),
   ),
-) satisfies Z.Effect<
+);
+
+example satisfies Z.Effect<
   never,
   FooError | BarError,
   readonly ["success1", "success2"]
@@ -89,31 +139,46 @@ export const a = pipe(
  * of the Effect returned from the callback with the Effect we called
  * catchTag on
  */
-export const a2 = pipe(
-  a,
-  Z.catchTag("FooError", e => Z.succeed(["recover", e.error] as const)),
-) satisfies Z.Effect<
+const catchTagSucceed = Z.catchTag(example, "FooError", e =>
+  Z.succeed(["recover", e.error] as const),
+);
+
+catchTagSucceed satisfies Z.Effect<
   never,
   BarError,
   readonly ["success1", "success2"] | readonly ["recover", string]
 >;
 
-export const a3 = pipe(
-  a,
-  Z.catchTag("FooError", e => Z.fail(new BazError(e.error))),
-) satisfies Z.Effect<
+const catchTagFail = Z.catchTag(example, "FooError", e =>
+  Z.fail(new BazError(e.error)),
+);
+
+catchTagFail satisfies Z.Effect<
   never,
   BarError | BazError,
   readonly ["success1", "success2"]
 >;
 
-/* Note: if you are integrating Effect in a legacy codebase and you defined
+/* catchTags allows to catch multiple errors from the failure channel */
+const catchTags = Z.catchTags(example, {
+  FooError: _e => Z.succeed("foo" as const),
+  BarError: _e => Z.succeed("bar" as const),
+});
+
+catchTags satisfies Z.Effect<
+  never,
+  never,
+  readonly ["success1", "success2"] | "foo" | "bar"
+>;
+
+/* If you are integrating Effect in a legacy codebase and you defined
  * errors as tagged unions with a key different from _tag, you can use
  * Effect.catch. The following is equivalent to Effect.catchTag */
-export const b = pipe(
-  a,
-  Z.catch("_tag", "FooError", e => Z.fail(new BazError(e.error))),
-) satisfies typeof a3;
+const catch_ = Z.catch(example, "_tag", "FooError", e =>
+  Z.fail(new BazError(e.error)),
+);
+
+catch_ satisfies typeof catchTagFail;
 
 /* TODO */
 
@@ -128,6 +193,12 @@ Z.catchSome; // ?
  */
 Z.catchAllCause(Z.logErrorCause);
 
-Z.absorb; // what's the use of this?: Effect<R, E, A> -> Effect<R, unknown, A>
-Z.sandbox; // ? Exposes Cause:  Effect<R, E, A> -> Effect<R, Cause<E>, A>
+Z.absorb;
+// Effect<R, E, A> -> Effect<R, unknown, A>
+// https://zio.dev/reference/error-management/operations/converting-defects-to-failures/
+
+Z.sandbox;
+// ? Exposes Cause:  Effect<R, E, A> -> Effect<R, Cause<E>, A>
+// https://zio.dev/reference/error-management/recovering/sandboxing
+
 Z.mapErrorCause; // ?
