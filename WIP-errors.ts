@@ -1,5 +1,7 @@
 import * as Z from "@effect/io/Effect";
 import * as Data from "@effect/data/Data";
+import * as Match from "@effect/match";
+import * as E from "@fp-ts/core/Either";
 import { pipe } from "@fp-ts/core/Function";
 
 /*
@@ -100,8 +102,8 @@ export const isNotEqual = Equal.equals(
  */
 
 /*
- * Recovering from failures
- * ========================
+ * Handling failures
+ * =================
  *
  * Let's move on and use the Errors we defined! :)
  *
@@ -180,18 +182,81 @@ const catch_ = Z.catch(example, "_tag", "FooError", e =>
 
 catch_ satisfies typeof catchTagFail;
 
-/* TODO */
+/* catchAll recovers at once from all the errors in the failure channel  */
+const catchAll = Z.catchAll(example, e =>
+  Z.succeed(["recover", e._tag] as const),
+);
 
-Z.catchAll;
-/* doesn't recover from unrecoverable error (what's unrecoverable? Effect.die?).
- * Use catchAllCause to catch unrecoverable errors */
+catchAll satisfies Z.Effect<
+  never,
+  never,
+  | readonly ["success1", "success2"]
+  | readonly ["recover", "FooError" | "BarError"]
+>;
 
-Z.catchSome; // ?
+/* catchSome allows to recover from some (or all) errors in the failure channel.
+ *
+ * Unlike catchAll, or cartchTag, catchSome doesn't reduce or eliminate the
+ * error type, although it can widen the error type to a broader class of
+ * errors.
+ *
+ * In real world code, you probably always want to use use catchTag instead.
+ */
+const catchSome = Z.catchSome(example, e =>
+  pipe(
+    Match.value(e),
+    Match.tag("FooError", e =>
+      Z.cond(
+        () => e.error === "foo",
+        () => "foo" as const,
+        () => e,
+      ),
+    ),
+    Match.option,
+  ),
+);
 
-/*
+catchSome satisfies Z.Effect<
+  never,
+  FooError | BarError,
+  readonly ["success1", "success2"] | "foo"
+>;
+
+/* Handling Defects
+ * ================
+ *
  * Cause (https://zio.dev/reference/core/cause/)
  */
-Z.catchAllCause(Z.logErrorCause);
+
+const dieingExample = pipe(
+  example,
+  Z.flatMap(() => Z.die("💥")),
+);
+
+const catchAllCauseLog = Z.catchAllCause(dieingExample, cause =>
+  Z.logErrorCauseMessage("something went wrong", cause),
+);
+
+/*
+ * Z.runPromise(catchAllCauseLog) will print a backtrace. i.e:
+ *
+ * timestamp=2023-02-14T17:19:17.373Z level=ERROR fiber=#0 message="something went wrong" cause="
+ * Error: 💥
+ *     at 002-errors.ts:233:21
+ *     at 002-errors.ts:233:5
+ *     at 002-errors.ts:236:28
+ *
+ */
+
+Z.runPromise(catchAllCauseLog);
+
+catchAllCauseLog satisfies Z.Effect<never, never, void>;
+
+const catchAllCausePreserveType = Z.catchAllCause(dieingExample, cause =>
+  Z.zipRight(Z.logErrorCause(cause), Z.failCause(cause)),
+);
+
+catchAllCausePreserveType satisfies typeof example;
 
 Z.absorb;
 // Effect<R, E, A> -> Effect<R, unknown, A>

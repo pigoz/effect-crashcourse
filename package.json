@@ -11,6 +11,7 @@
   "author": "",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
+    "@effect/match": "^0.0.11",
     "@types/debug": "^4.1.7",
     "debug": "^4.3.4",
     "ts-toolbelt": "^9.6.0",
