@@ -194,13 +194,13 @@ catchAll satisfies Z.Effect<
   | readonly ["recover", "FooError" | "BarError"]
 >;
 
-/* catchSome allows to recover from some (or all) errors in the failure channel.
+/* catchSome recovers from some (or all) errors in the failure channel.
  *
- * Unlike catchAll, or cartchTag, catchSome doesn't reduce or eliminate the
- * error type, although it can widen the error type to a broader class of
- * errors.
+ * Unlike catchAll, or cartchTag, catchSome doesn't narrow the error type, but
+ * it can widen it to a broader class of errors.
  *
- * In real world code, you probably always want to use use catchTag instead.
+ * In real world code, you probably always want to use use catchTag instead
+ * since it can both narrow and widen the error type.
  */
 const catchSome = Z.catchSome(example, e =>
   pipe(
