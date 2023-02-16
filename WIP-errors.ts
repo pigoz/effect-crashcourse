@@ -1,8 +1,9 @@
 import * as Z from "@effect/io/Effect";
+import * as Cause from "@effect/io/Cause";
 import * as Data from "@effect/data/Data";
 import * as Match from "@effect/match";
 import * as E from "@fp-ts/core/Either";
-import { pipe } from "@fp-ts/core/Function";
+import { identity, pipe } from "@fp-ts/core/Function";
 
 /*
  * Effect (and ZIO) have 3 main types of errors:
@@ -222,10 +223,80 @@ catchSome satisfies Z.Effect<
   readonly ["success1", "success2"] | "foo"
 >;
 
+/* Aside from catching failures you can also fallback to other effects.
+ * orElse is similar to catchAll but doesn't allow to inspect the error value */
+const fallback = Z.orElse(example, () => Z.succeed("foo" as const));
+
+fallback satisfies Z.Effect<
+  never,
+  never,
+  readonly ["success1", "success2"] | "foo"
+>;
+
+/*
+ * orElseEither uses an Either to store the original success value, or the
+ * fallback success value
+ */
+const fallbackEither = Z.orElseEither(example, () => Z.succeed("foo" as const));
+
+fallbackEither satisfies Z.Effect<
+  never,
+  never,
+  E.Either<readonly ["success1", "success2"], "foo">
+>;
+
+/* The last option is folding, known as matching in Effect */
+const match = Z.match(
+  example,
+  e => e._tag,
+  x => x[0],
+);
+
+match satisfies Z.Effect<never, never, "FooError" | "BarError" | "success1">;
+
 /* Handling Defects
  * ================
  *
- * Cause (https://zio.dev/reference/core/cause/)
+ * As mentioned in the original summary, defects are unexpected errors that
+ * don't appear in the failure channel (E of Effect<R,E,A>).
+ *
+ * Even though they don't appear in E, the Effect runtime still keeps track
+ * of them in a data structure called Cause.
+ *
+ * Here are the constructurs for all Cause types:
+ */
+
+Cause.empty; // Cause of an Effect that succeeds
+Cause.fail; // Cause of an Effect that errors with fail (failure)
+Cause.die; // Cause of an Effect that errors with die (defect)
+Cause.interrupt; // Cause of an Effect that errors with interrupt
+Cause.annotated; // ?
+Cause.sequential; // ?
+Cause.parallel; // ?
+
+// And with Cause.match you can match a cause by it's type:
+Cause.match(
+  Cause.empty,
+  "empty",
+  error => `fail ${error}`,
+  defect => `die ${defect}`,
+  fiberid => `interrupt ${fiberid}`,
+  (value, annotation) => `annotated ${value} ${annotation}`,
+  (left, right) => `sequential ${left} ${right}`,
+  (left, right) => `parallel ${left} ${right}`,
+);
+
+// Effect.cause returns an Effect that succeeds with the argument's Cause, or
+// the emtpy Cause if the argument succeeds.
+const emptyCause = Z.cause(Z.succeed(1));
+emptyCause satisfies Z.Effect<never, never, Cause.Cause<never>>;
+
+const failCause = Z.cause(Z.fail(1));
+failCause satisfies Z.Effect<never, never, Cause.Cause<number>>;
+
+/*
+ * Since defects are unexpected errors, most of the time you just may want to
+ * log them with catchAllCause and logErrorCause:
  */
 
 const dieingExample = pipe(
@@ -233,9 +304,15 @@ const dieingExample = pipe(
   Z.flatMap(() => Z.die("💥")),
 );
 
+/*
+ * Z.catchAllCause is similar to Z.catchAll but exposes the full Cause<E> in
+ * the callback, instead of just E
+ */
 const catchAllCauseLog = Z.catchAllCause(dieingExample, cause =>
   Z.logErrorCauseMessage("something went wrong", cause),
 );
+
+catchAllCauseLog satisfies Z.Effect<never, never, void>;
 
 /*
  * Z.runPromise(catchAllCauseLog) will print a backtrace. i.e:
@@ -245,25 +322,46 @@ const catchAllCauseLog = Z.catchAllCause(dieingExample, cause =>
  *     at 002-errors.ts:233:21
  *     at 002-errors.ts:233:5
  *     at 002-errors.ts:236:28
- *
  */
 
-Z.runPromise(catchAllCauseLog);
+/* Effect.absorb and Effect.resurrect allow to recover from defects and
+ * transform them into failure discarding all the information about the Cause
+ *
+ * They have the same type signature, but while absorb onlyy recovers from
+ * Defects, resurrect also recovers from Interrupts.
+ */
 
-catchAllCauseLog satisfies Z.Effect<never, never, void>;
-
-const catchAllCausePreserveType = Z.catchAllCause(dieingExample, cause =>
-  Z.zipRight(Z.logErrorCause(cause), Z.failCause(cause)),
+const interruptingExample = pipe(
+  example,
+  Z.flatMap(() => Z.interrupt()),
 );
 
-catchAllCausePreserveType satisfies typeof example;
+const absorb = pipe(dieingExample, Z.absorb, Z.ignore);
+const resurrect = pipe(interruptingExample, Z.resurrect, Z.ignore);
 
-Z.absorb;
-// Effect<R, E, A> -> Effect<R, unknown, A>
-// https://zio.dev/reference/error-management/operations/converting-defects-to-failures/
+const successful = pipe(
+  absorb,
+  Z.flatMap(() => resurrect),
+  Z.flatMap(() => Z.succeed("recovered" as const)),
+  Z.zipLeft(Z.logInfo("exited successfully")),
+);
+
+successful satisfies Z.Effect<never, never, "recovered">;
+
+/* On the other hand, Effect.refine* combinators allow to convert only some
+ * failures into defects.
+ */
+
+const refineTagOrDie = Z.refineOrDie(example, failure =>
+  pipe(Match.value(failure), Match.tag("FooError", identity), Match.option),
+);
+
+refineTagOrDie satisfies Z.Effect<
+  never,
+  FooError,
+  readonly ["success1", "success2"]
+>;
 
 Z.sandbox;
 // ? Exposes Cause:  Effect<R, E, A> -> Effect<R, Cause<E>, A>
 // https://zio.dev/reference/error-management/recovering/sandboxing
-
-Z.mapErrorCause; // ?
