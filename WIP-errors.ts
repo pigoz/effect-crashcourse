@@ -1,7 +1,9 @@
 import * as Z from "@effect/io/Effect";
+import * as Effect from "@effect/io/Effect";
 import * as Cause from "@effect/io/Cause";
 import * as Data from "@effect/data/Data";
 import * as Match from "@effect/match";
+import * as O from "@fp-ts/core/Option";
 import * as E from "@fp-ts/core/Either";
 import { identity, pipe } from "@fp-ts/core/Function";
 
@@ -324,7 +326,9 @@ catchAllCauseLog satisfies Z.Effect<never, never, void>;
  *     at 002-errors.ts:236:28
  */
 
-/* Effect.absorb and Effect.resurrect allow to recover from defects and
+/* Defect to Failure
+ *
+ * Effect.absorb and Effect.resurrect allow to recover from defects and
  * transform them into failure discarding all the information about the Cause
  *
  * They have the same type signature, but while absorb onlyy recovers from
@@ -348,20 +352,34 @@ const successful = pipe(
 
 successful satisfies Z.Effect<never, never, "recovered">;
 
-/* On the other hand, Effect.refine* combinators allow to convert only some
- * failures into defects.
+/* Failure to Defect
+ *
+ * Effect.refine* combinators allow to convert failures into defects.
+ * Their general semantic is to keep some of the failures as such, and covert
+ * the others to a defect.
  */
 
-const refineTagOrDie = Z.refineOrDie(example, failure =>
+const refineTagOrDie1 = Z.refineOrDie(example, failure =>
   pipe(Match.value(failure), Match.tag("FooError", identity), Match.option),
 );
 
-refineTagOrDie satisfies Z.Effect<
+refineTagOrDie1 satisfies Z.Effect<
   never,
   FooError,
   readonly ["success1", "success2"]
 >;
 
-Z.sandbox;
-// ? Exposes Cause:  Effect<R, E, A> -> Effect<R, Cause<E>, A>
-// https://zio.dev/reference/error-management/recovering/sandboxing
+/* Sandbox
+ *
+ * catchSomeCause and catchAllCause are actually shorthands for using
+ * sandbox -> catchSome/catchAll -> unsandBox
+ *
+ * sandbox exposes the full Cause in the failure channel, while unsandbox
+ * submerges it.
+ */
+export const sandboxed = pipe(
+  dieingExample,
+  Z.sandbox,
+  Z.catchSome(_x => O.some(Z.succeed(1))),
+  Z.unsandbox,
+);
