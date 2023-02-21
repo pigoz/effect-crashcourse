@@ -140,9 +140,8 @@ example satisfies Z.Effect<
 
 /* If we want to recover from one of those failures, we can use catchTag.
  *
- * This will remove FooError from the E in Effect<R, E, A> and unify the type
- * of the Effect returned from the callback with the Effect we called
- * catchTag on
+ * This will remove FooError from the E in Effect<R, E, A> in `example`,
+ * and unify the return type of the callback with `example`.
  */
 const catchTagSucceed = Z.catchTag(example, "FooError", e =>
   Z.succeed(["recover", e.error] as const),
@@ -185,7 +184,12 @@ const catch_ = Z.catch(example, "_tag", "FooError", e =>
 
 catch_ satisfies typeof catchTagFail;
 
-/* catchAll recovers at once from all the errors in the failure channel  */
+/* catchAll recovers at once from all the errors in the failure channel.
+ * You can use it to perform custom matching on errors in case you are not
+ * using tagged unions.
+ *
+ * NOTE: In the Effect internals, catchTag is built on top of catchAll!
+ */
 const catchAll = Z.catchAll(example, e =>
   Z.succeed(["recover", e._tag] as const),
 );
