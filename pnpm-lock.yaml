@@ -4,7 +4,7 @@ specifiers:
   '@effect/data': ^0.0.1
   '@effect/io': ^0.1.10
   '@effect/match': ^0.0.11
-  '@fp-ts/core': ^0.2.0
+  '@effect/data': ^0.2.0
   '@fp-ts/schema': ^0.1.3
   '@types/debug': ^4.1.7
   '@types/node': ^18.11.18
@@ -24,7 +24,7 @@ dependencies:
 devDependencies:
   '@effect/data': 0.0.1
   '@effect/io': 0.1.10
-  '@fp-ts/core': 0.2.0
+  '@effect/data': 0.2.0
   '@fp-ts/schema': 0.1.3
   '@types/node': 18.13.0
   prettier: 2.8.4
@@ -35,20 +35,20 @@ packages:
   /@effect/data/0.0.1:
     resolution: {integrity: sha512-C5G23kMDMhKkgR+hyWLaE83BoAf/L36vdJ703US79dOpSkH3U6RgJUiXsZK893GmW5KXISxdqkpSacNIH2OMLQ==}
     dependencies:
-      '@fp-ts/core': 0.1.1
+      '@effect/data': 0.1.1
     dev: true
 
   /@effect/io/0.1.10:
     resolution: {integrity: sha512-iGlvA2i+ocsdOUk+6rucGrg8BklVJehbllIWeyMgQvYWjxAbrqH3hUPzExz42Z1iw9duTx6iWpUguHV5+4U1KQ==}
     dependencies:
       '@effect/data': 0.0.1
-      '@fp-ts/core': 0.1.1
+      '@effect/data': 0.1.1
     dev: true
 
   /@effect/match/0.0.11:
     resolution: {integrity: sha512-tDvvvy2uOtXTHvwSDpaFXpl/LSXbKohAMRoloJSgIUs5P7B3pza9WdZeGUWJ0xG9iyKPoTRZQ+lIMR25yiTYRA==}
     dependencies:
-      '@fp-ts/core': 0.1.1
+      '@effect/data': 0.1.1
       '@fp-ts/schema': 0.1.3
     dev: false
 
@@ -91,22 +91,22 @@ packages:
     dev: true
     optional: true
 
-  /@fp-ts/core/0.1.1:
+  /@effect/data/0.1.1:
     resolution: {integrity: sha512-7vQnrnvJAMrXgIwt0qQNhXkPDtm4l8vwql8EvXeY47v/FwnWpDvt1HISoO9Kq3am5SZ0A8Av+4NqPab2FRdKxw==}
 
-  /@fp-ts/core/0.2.0:
+  /@effect/data/0.2.0:
     resolution: {integrity: sha512-oDMfMDId/Op6EHLTBZvhsW6d0XmXZDWQsvcZmC2wXGt+utv8hXGi41IJD8SwBJsvQvoJYe/NRTamDco4Bl7qsQ==}
     dev: true
 
   /@fp-ts/data/0.1.1:
     resolution: {integrity: sha512-hgsoSDKP01kGY+g/Ino+QX3VEqiPnf0mrhKujMajT4ma0w82i4u0nMEPbBykyMxscQirFemwl7CnWn7G3TadcA==}
     dependencies:
-      '@fp-ts/core': 0.1.1
+      '@effect/data': 0.1.1
 
   /@fp-ts/schema/0.1.3:
     resolution: {integrity: sha512-rdyqwodZPqbY96mAUg3cAEKK7WsJ3JqZWDfBShSoPvxwB+fnFw1Rjhg3tsTpBhBN1oGlSHatIRJQ+QcoaAU+uA==}
     dependencies:
-      '@fp-ts/core': 0.1.1
+      '@effect/data': 0.1.1
       '@fp-ts/data': 0.1.1
       fast-check: 3.6.2
 
