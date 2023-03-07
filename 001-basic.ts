@@ -1,5 +1,5 @@
-import { pipe } from "@fp-ts/core/Function";
-import * as E from "@fp-ts/core/Either";
+import { pipe } from "@effect/data/Function";
+import * as E from "@effect/data/Either";
 import * as Z from "@effect/io/Effect";
 import * as ZL from "@effect/io/Layer";
 import * as Context from "@effect/data/Context";

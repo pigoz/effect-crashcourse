@@ -2,10 +2,10 @@ import * as Z from "@effect/io/Effect";
 import * as Exit from "@effect/io/Exit";
 import * as Fiber from "@effect/io/Fiber";
 
-import * as ReadonlyArray from "@fp-ts/core/ReadonlyArray";
+import * as ReadonlyArray from "@effect/data/ReadonlyArray";
 import * as Chunk from "@effect/data/Chunk";
 import * as Duration from "@effect/data/Duration";
-import { pipe } from "@fp-ts/core/Function";
+import { pipe } from "@effect/data/Function";
 
 /*
  * Until now we executed effects in a way that made them look synchronous.

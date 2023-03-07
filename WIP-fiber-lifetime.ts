@@ -5,7 +5,7 @@ import * as Supervisor from "@effect/io/Supervisor";
 import * as Scope from "@effect/io/Scope";
 import * as Chunk from "@effect/data/Chunk";
 import * as Exit from "@effect/io/Exit";
-import { pipe } from "@fp-ts/core/Function";
+import { pipe } from "@effect/data/Function";
 
 /*
  * In the previous chapter we saw how to introduce concurrency using Fiber.

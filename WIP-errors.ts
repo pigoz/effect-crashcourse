@@ -1,11 +1,10 @@
 import * as Z from "@effect/io/Effect";
-import * as Effect from "@effect/io/Effect";
 import * as Cause from "@effect/io/Cause";
 import * as Data from "@effect/data/Data";
 import * as Match from "@effect/match";
-import * as O from "@fp-ts/core/Option";
-import * as E from "@fp-ts/core/Either";
-import { identity, pipe } from "@fp-ts/core/Function";
+import * as O from "@effect/data/Option";
+import * as E from "@effect/data/Either";
+import { identity, pipe } from "@effect/data/Function";
 
 /*
  * Effect (and ZIO) have 3 main types of errors:

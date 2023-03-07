@@ -1,4 +1,4 @@
-import { pipe } from "@fp-ts/core/Function";
+import { pipe } from "@effect/data/Function";
 import * as Z from "@effect/io/Effect";
 import * as Context from "@effect/data/Context";
 
@@ -52,10 +52,10 @@ export const hell = pipe(
 
 /*
  * For an example so trivial we can actually still get away with the pipe based
- * API using the tuple combinator built in into Effect.
+ * API using the all combinator built in into Effect.
  */
 export const tuple = pipe(
-  Z.tuple(Z.service(CustomRandom), Z.service(Foo), Z.service(Bar)),
+  Z.all(Z.service(CustomRandom), Z.service(Foo), Z.service(Bar)),
   Z.flatMap(([random, foo, bar]) =>
     Z.sync(() => {
       console.log("not as bad!", random.next(), foo.foo, bar.bar);

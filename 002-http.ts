@@ -1,6 +1,6 @@
-import { pipe } from "@fp-ts/core/Function";
+import { pipe } from "@effect/data/Function";
 import * as Z from "@effect/io/Effect";
-import * as S from "@fp-ts/schema";
+import * as S from "@effect/schema";
 import { decode } from "./utils/decode";
 
 /*
