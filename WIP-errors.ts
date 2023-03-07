@@ -228,8 +228,9 @@ catchSome satisfies Z.Effect<
   readonly ["success1", "success2"] | "foo"
 >;
 
-/* Aside from catching failures you can also fallback to other effects.
- * orElse is similar to catchAll but doesn't allow to inspect the error value */
+/* orElse* combinators are similar to catchAll but on top of failures they
+ * also catch interruptions.
+ */
 const fallback = Z.orElse(example, () => Z.succeed("foo" as const));
 
 fallback satisfies Z.Effect<
