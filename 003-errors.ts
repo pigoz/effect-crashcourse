@@ -2,8 +2,8 @@ import * as Effect from "@effect/io/Effect";
 import * as Cause from "@effect/io/Cause";
 import * as Data from "@effect/data/Data";
 import * as Match from "@effect/match";
-import * as O from "@effect/data/Option";
-import * as E from "@effect/data/Either";
+import * as Option from "@effect/data/Option";
+import * as Either from "@effect/data/Either";
 import { identity, pipe } from "@effect/data/Function";
 
 /*
@@ -256,7 +256,7 @@ const fallbackEither = Effect.orElseEither(example, () =>
 fallbackEither satisfies Effect.Effect<
   never,
   never,
-  E.Either<readonly ["success1", "success2"], "foo">
+  Either.Either<readonly ["success1", "success2"], "foo">
 >;
 
 /* The last option is folding, known as matching in Effect */
@@ -396,6 +396,6 @@ export const sandboxed = pipe(
   dieExample,
   Effect.sandbox,
   // Hover over _errorCause to see its type
-  Effect.catchSome(_errorCause => O.some(Effect.succeed(1))),
+  Effect.catchSome(_errorCause => Option.some(Effect.succeed(1))),
   Effect.unsandbox,
 );
