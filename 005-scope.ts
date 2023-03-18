@@ -9,8 +9,7 @@ import { promisify } from "node:util";
 /* In this chapter we explore Scope.
  *
  * It is useful to understand Layer in the following chapter, but since Scope
- * can be used on it's own without Layer, I decided it made sense to
- * introduce it before Layer.
+ * can be used on it's own without Layer, it's being introduced here first.
  *
  * What is Scope? It's a datatype to model the lifetime of resources.
  *
@@ -27,10 +26,9 @@ import { promisify } from "node:util";
  *    is closed, it's children are closed as well.
  */
 
-/* We mentioned resources above. So the new question becomes: what is a resource?
+/* We mentioned resources above. What is a resource?
  *
- * They are also known as "scoped effect" in the Effect docs, or "scoped value"
- * in the ZIO docs. They are effects that require a Scope to run.
+ * They are also known as "scoped effect". They are effects that require a Scope to run.
  *
  * In types they look like this:
  *
@@ -98,7 +96,7 @@ export const useFileDescriptorStupid: useFileDescriptor = Effect.gen(function* (
 /* If you look closely at it, the previous code can be split in 3 steps:
  *
  *  - acquire: creates the scope with Scope.make
- *  - use: provides the scope to the resource and console.log
+ *  - use: provides the scope to the resource and Effect.logInfo
  *  - release: closes the scope
  *
  *  Since this is a common pattern, Effect comes with a function called
@@ -117,12 +115,12 @@ export const useFileDescriptorSmarter: useFileDescriptor =
   );
 
 /* While the first example didn't have any error handling, this has the added
- * benefit of being a spiritual equivalent of try-catch.
+ * benefit of being a spiritual equivalent to try-catch.
  *
- * If the acquire effect succeeds, similarly to a finally clause, the end
- * effect is guaranteed to be run regardless of the use effect's result.
+ * If the acquire effect succeeds, the end
+ * effect is guaranteed to be run regardless of the use effect's result (similar to a finally clause).
  *
- * Anyway, that was still quite long to write, and using scopes is very common.
+ * That was still quite long to write, and using scopes is very common.
  *
  * So Effect comes with a `scoped` function that does the whole
  * acquireUseRelease dance for you, providing a Scope to it's argument, and
