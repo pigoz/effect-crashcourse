@@ -36,7 +36,9 @@ import * as Context from "@effect/data/Context";
  * 2. There are explicit type annotations in several parts of this crash course to make it easier for you to follow.
  */
 
-// Here's some basic constructors
+// The point of these functions is to demonstrate a couple basic ways to create an "Effect" value.
+// Notice how the types change based on the function you call.
+
 export const s = Effect.succeed(7); // Effect.Effect<never, never, number>
 
 export const f = Effect.fail(3); // Effect.Effect<never, number, never>
