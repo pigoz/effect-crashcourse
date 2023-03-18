@@ -1,6 +1,6 @@
 import { pipe } from "@effect/data/Function";
 import * as Effect from "@effect/io/Effect";
-import * as ZL from "@effect/io/Layer";
+import * as Layer from "@effect/io/Layer";
 import * as Scope from "@effect/io/Scope";
 import * as Exit from "@effect/io/Exit";
 import * as Runtime from "@effect/io/Runtime";
@@ -8,7 +8,7 @@ import * as Context from "@effect/data/Context";
 import * as fs from "node:fs";
 import { promisify } from "node:util";
 
-/* In 001-basic we saw a very simple example using Layer to handle dependency
+/* In 001-basic.ts we saw a very simple example using Layer to handle dependency
  * injection. Here we build a realistic Layer example using Scope and Runtime
  * that you should be able to use in your own production application.
  *
@@ -34,8 +34,8 @@ const program2 = Effect.gen(function* ($) {
 });
 
 // These are stupid Layers with no lifetime
-const FooLive = ZL.succeed(Foo, { foo: 4 });
-const BarLive = ZL.succeed(Bar, { bar: 2 });
+const FooLive = Layer.succeed(Foo, { foo: 4 });
+const BarLive = Layer.succeed(Bar, { bar: 2 });
 
 // This is the exact same "scoped effect" we defined in 004-scope to manage a
 // FileDescriptor lifetime!
@@ -54,9 +54,9 @@ export const resource: Effect.Effect<Scope.Scope, never, FileDescriptor> =
   );
 
 /*
- * Now comes the interestring part.
+ * Now comes the interesting part.
  *
- * Similarly to how we used Effect.scoped to provide a Scope to our scoped
+ * Similar to how we used Effect.scoped to provide a Scope to our scoped
  * effect, Layer.scoped builds a Layer from a scoped effect and provides a
  * Scope to it.
  *
@@ -71,8 +71,8 @@ export const resource: Effect.Effect<Scope.Scope, never, FileDescriptor> =
  * Scope is closed (if you recall the previous chapter, acquireRelease adds
  * the release effect to the Scope with addFinalizer).
  */
-export const FileDescriptorLive: ZL.Layer<never, never, FileDescriptor> =
-  ZL.scoped(FileDescriptor, resource);
+export const FileDescriptorLive: Layer.Layer<never, never, FileDescriptor> =
+  Layer.scoped(FileDescriptor, resource);
 
 /* This next part is the final glue code needed and is platform specific.
  * We assume a Node environment.
@@ -81,10 +81,12 @@ export const FileDescriptorLive: ZL.Layer<never, never, FileDescriptor> =
  * cleanup Effect (close) that should be run after the Runtime is not useful
  * anymore.
  */
-const makeAppRuntime = <R, E, A>(layer: ZL.Layer<R, E, A>) =>
+const makeAppRuntime = <R, E, A>(layer: Layer.Layer<R, E, A>) =>
   Effect.gen(function* ($) {
     const scope = yield* $(Scope.make());
-    const ctx: Context.Context<A> = yield* $(ZL.buildWithScope(scope)(layer));
+    const ctx: Context.Context<A> = yield* $(
+      Layer.buildWithScope(scope)(layer),
+    );
     const runtime = yield* $(
       pipe(Effect.runtime<A>(), Effect.provideContext(ctx)),
     );
@@ -101,10 +103,10 @@ const makeAppRuntime = <R, E, A>(layer: ZL.Layer<R, E, A>) =>
  */
 type AppLayer = Foo | Bar | FileDescriptor;
 
-const appLayerLive: ZL.Layer<never, never, AppLayer> = pipe(
+const appLayerLive: Layer.Layer<never, never, AppLayer> = pipe(
   FooLive,
-  ZL.provideMerge(BarLive),
-  ZL.provideMerge(FileDescriptorLive),
+  Layer.provideMerge(BarLive),
+  Layer.provideMerge(FileDescriptorLive),
 );
 
 /*
