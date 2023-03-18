@@ -6,8 +6,7 @@ import * as Context from "@effect/data/Context";
 
 /*
  * The unique insight of Effect is that errors and requirements/dependencies should be modeled in your program's control flow.
- * This is in contrast to the typical TypeScript code, where a function can either return a value or throw an exception.
- * In typical TypeScript code, you typically don't model a function that can fail, or a function that needs some external dependencies.
+ * This is in contrast to your typical TypeScript code, where a function can either return a "success" value or throw an exception.
  *
  * The data type of Effect looks like the following:
  *
@@ -34,7 +33,7 @@ import * as Context from "@effect/data/Context";
 /**
  * Notes while going through the rest of this crash course:
  * 1. Effect has excellent type inference. You rarely need to specify types manually.
- * 2. We have explicit type annotations in several parts of this crash course to make it easier for you to follow.
+ * 2. There are explicit type annotations in several parts of this crash course to make it easier for you to follow.
  */
 
 // Here's some basic constructors
@@ -52,7 +51,7 @@ export const sf = Effect.failSync(() => {
   return 4;
 }); // Effect.Effect<never, number, never>
 
-// The following is an example of a computation that can fail. We will look at more examples to handle errors in a later chapter.
+// The following is an example of a computation that can fail. We will look at more error handling in a later chapter.
 function eitherFromRandom(random: number): Either.Either<"fail", number> {
   return random > 0.5 ? Either.right(random) : Either.left("fail" as const);
 }
