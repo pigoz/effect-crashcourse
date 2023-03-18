@@ -1,5 +1,5 @@
 import { pipe } from "@effect/data/Function";
-import * as Z from "@effect/io/Effect";
+import * as Effect from "@effect/io/Effect";
 import * as Scope from "@effect/io/Scope";
 import * as Exit from "@effect/io/Exit";
 import { FileDescriptor } from "utils/contexts";
@@ -34,7 +34,7 @@ import { promisify } from "node:util";
  *
  * In types they look like this:
  *
- *  Z.Effect<Scope.Scope, DatabaseConnectionError, DatabaseConnection>
+ *  Effect.Effect<Scope.Scope, DatabaseConnectionError, DatabaseConnection>
  *
  *
  * The most common way to create a "scoped effect" is the `acquireRelease`
@@ -61,17 +61,17 @@ import { promisify } from "node:util";
  *
  * Let's define a basic resource that implements the FileDescriptor interface.
  */
-export const resource: Z.Effect<Scope.Scope, never, FileDescriptor> =
-  Z.acquireRelease(
+export const resource: Effect.Effect<Scope.Scope, never, FileDescriptor> =
+  Effect.acquireRelease(
     pipe(
-      Z.promise(() => promisify(fs.open)("/dev/null", "w")),
-      Z.map(fd => ({ fd })),
-      Z.tap(() => Z.logInfo("FileDescriptor acquired")),
+      Effect.promise(() => promisify(fs.open)("/dev/null", "w")),
+      Effect.map(fd => ({ fd })),
+      Effect.tap(() => Effect.logInfo("FileDescriptor acquired")),
     ),
     ({ fd }) =>
       pipe(
-        Z.promise(() => promisify(fs.close)(fd)),
-        Z.tap(() => Z.logInfo("FileDescriptor released")),
+        Effect.promise(() => promisify(fs.close)(fd)),
+        Effect.tap(() => Effect.logInfo("FileDescriptor released")),
       ),
   );
 
@@ -84,12 +84,14 @@ export const resource: Z.Effect<Scope.Scope, never, FileDescriptor> =
  * Anyhow, we now have our "scoped effect". If we want to run it we have to
  * provide a Scope to it - which turns R from Scope to never.
  */
-type useFileDescriptor = Z.Effect<never, never, void>;
+type useFileDescriptor = Effect.Effect<never, never, void>;
 
-export const useFileDescriptorStupid: useFileDescriptor = Z.gen(function* ($) {
+export const useFileDescriptorStupid: useFileDescriptor = Effect.gen(function* (
+  $,
+) {
   const scope = yield* $(Scope.make());
-  const fd = yield* $(pipe(resource, Z.provideService(Scope.Tag, scope)));
-  yield* $(Z.logInfo(`useFileDescriptorStupid ${fd}`));
+  const fd = yield* $(pipe(resource, Effect.provideService(Scope.Tag, scope)));
+  yield* $(Effect.logInfo(`useFileDescriptorStupid ${fd}`));
   yield* $(Scope.close(scope, Exit.unit()));
 });
 
@@ -102,16 +104,17 @@ export const useFileDescriptorStupid: useFileDescriptor = Z.gen(function* ($) {
  *  Since this is a common pattern, Effect comes with a function called
  *  acquireUseRelease to build such effects.
  */
-export const useFileDescriptorSmarter: useFileDescriptor = Z.acquireUseRelease(
-  Scope.make(),
-  scope =>
-    pipe(
-      resource,
-      Z.tap(_ => Z.logInfo(`useFileDescriptorSmarter ${_.fd}`)),
-      Z.provideService(Scope.Tag, scope),
-    ),
-  scope => Scope.close(scope, Exit.unit()),
-);
+export const useFileDescriptorSmarter: useFileDescriptor =
+  Effect.acquireUseRelease(
+    Scope.make(),
+    scope =>
+      pipe(
+        resource,
+        Effect.tap(_ => Effect.logInfo(`useFileDescriptorSmarter ${_.fd}`)),
+        Effect.provideService(Scope.Tag, scope),
+      ),
+    scope => Scope.close(scope, Exit.unit()),
+  );
 
 /* While the first example didn't have any error handling, this has the added
  * benefit of being a spiritual equivalent of try-catch.
@@ -127,13 +130,13 @@ export const useFileDescriptorSmarter: useFileDescriptor = Z.acquireUseRelease(
  */
 export const useFileDescriptor: useFileDescriptor = pipe(
   resource,
-  Z.tap(_ => Z.logInfo(`useFileDescriptor ${_.fd}`)),
-  Z.scoped,
+  Effect.tap(_ => Effect.logInfo(`useFileDescriptor ${_.fd}`)),
+  Effect.scoped,
 );
 
-Z.runPromise(useFileDescriptor);
+Effect.runPromise(useFileDescriptor);
 
-/* Z.runPromise(useFileDescriptor); will print something like:
+/* Effect.runPromise(useFileDescriptor); will print something like:
  *
  * FileDescriptor acquired { fd: 22 }
  * useFileDescriptor { fd: 22 }
@@ -157,10 +160,18 @@ Z.runPromise(useFileDescriptor);
  * this is just to drive the point home.
  */
 export const myAcquireUseRelease = <R, E, A, R2, E2, A2, R3, X>(
-  acquire: Z.Effect<R, E, A>,
-  use: (a: A) => Z.Effect<R2, E2, A2>,
-  release: (a: A, exit: Exit.Exit<unknown, unknown>) => Z.Effect<R3, never, X>,
-) => pipe(Z.acquireRelease(acquire, release), Z.flatMap(use), Z.scoped);
+  acquire: Effect.Effect<R, E, A>,
+  use: (a: A) => Effect.Effect<R2, E2, A2>,
+  release: (
+    a: A,
+    exit: Exit.Exit<unknown, unknown>,
+  ) => Effect.Effect<R3, never, X>,
+) =>
+  pipe(
+    Effect.acquireRelease(acquire, release),
+    Effect.flatMap(use),
+    Effect.scoped,
+  );
 
 /*
  *
@@ -169,10 +180,10 @@ export const myAcquireUseRelease = <R, E, A, R2, E2, A2, R3, X>(
  * and meant to be reused.
  */
 export const writeSomethingToDevNull = (something: string) =>
-  Z.acquireUseRelease(
-    Z.promise(() => promisify(fs.open)("/dev/null", "w")),
-    fd => Z.promise(() => promisify(fs.writeFile)(fd, something)),
-    fd => Z.promise(() => promisify(fs.close)(fd)),
+  Effect.acquireUseRelease(
+    Effect.promise(() => promisify(fs.open)("/dev/null", "w")),
+    fd => Effect.promise(() => promisify(fs.writeFile)(fd, something)),
+    fd => Effect.promise(() => promisify(fs.close)(fd)),
   );
 
 /*

@@ -1,6 +1,6 @@
 import { pipe } from "@effect/data/Function";
-import * as Z from "@effect/io/Effect";
-import * as S from "@effect/schema";
+import * as Effect from "@effect/io/Effect";
+import * as Schema from "@effect/schema";
 import { decode } from "./utils/decode";
 
 /*
@@ -8,48 +8,48 @@ import { decode } from "./utils/decode";
  * In this example we build a small program to fetch a Gist.
  */
 const fetchGist = (id: string) =>
-  Z.tryCatchPromise(
+  Effect.tryCatchPromise(
     () => fetch(`https://api.github.com/gists/${id}`),
     () => "fetch" as const,
   );
 
 const getJson = (res: Response) =>
-  Z.tryCatchPromise(
+  Effect.tryCatchPromise(
     () => res.json() as Promise<unknown>, // Promise<any> otherwise
     () => "json" as const,
   );
 
-const GistSchema = S.struct({
-  url: S.string,
-  files: S.record(
-    S.string,
-    S.struct({
-      filename: S.string,
-      type: S.string,
-      language: S.string,
-      raw_url: S.string,
+const GistSchema = Schema.struct({
+  url: Schema.string,
+  files: Schema.record(
+    Schema.string,
+    Schema.struct({
+      filename: Schema.string,
+      type: Schema.string,
+      language: Schema.string,
+      raw_url: Schema.string,
     }),
   ),
 });
 
-interface Gist extends S.Infer<typeof GistSchema> {}
+interface Gist extends Schema.Infer<typeof GistSchema> {}
 
 const id = "97459c0045f373f4eaf126998d8f65dc";
 
 const program = pipe(
-  // Z.Effect<never, 'fetch', Response>
+  // Effect.Effect<never, 'fetch', Response>
   fetchGist(id),
 
-  // Z.Effect<never, 'fetch' | 'json', unknown>
-  Z.flatMap(getJson),
+  // Effect.Effect<never, 'fetch' | 'json', unknown>
+  Effect.flatMap(getJson),
 
-  // Z.Effect<never, 'fetch' | 'json', Either<DecodeError, Gist>>
-  Z.map(decode<Gist>(GistSchema)),
+  // Effect.Effect<never, 'fetch' | 'json', Either<DecodeError, Gist>>
+  Effect.map(decode<Gist>(GistSchema)),
 
-  // Z.Effect<never, 'fetch' | 'json' | DecodeError, Gist>
-  Z.flatMap(Z.fromEither),
+  // Effect.Effect<never, 'fetch' | 'json' | DecodeError, Gist>
+  Effect.flatMap(Effect.fromEither),
 );
 
-Z.runPromise(program)
+Effect.runPromise(program)
   .then(x => console.log("decoded gist %o", x))
   .catch(err => console.error(err));

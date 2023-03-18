@@ -1,5 +1,5 @@
-import * as Z from "@effect/io/Effect";
-import * as S from "@effect/schema";
+import * as Effect from "@effect/io/Effect";
+import * as Schema from "@effect/schema";
 import * as E from "@effect/data/Either";
 import { pipe } from "@effect/data/Function";
 import { formatErrors } from "@effect/schema/formatter/Tree";
@@ -9,10 +9,10 @@ export class DecodeError {
   constructor(readonly error: string) {}
 }
 
-export function decode<A>(schema: S.Schema<A>) {
+export function decode<A>(schema: Schema.Schema<A>) {
   return (input: unknown) =>
     pipe(
-      S.decode<A>(schema)(input, {
+      Schema.decode<A>(schema)(input, {
         allErrors: true,
         isUnexpectedAllowed: true,
       }),
@@ -20,6 +20,7 @@ export function decode<A>(schema: S.Schema<A>) {
     );
 }
 
-export function decodee<A>(schema: S.Schema<A>) {
-  return (input: unknown) => Z.absolve(Z.sync(() => decode(schema)(input)));
+export function decodee<A>(schema: Schema.Schema<A>) {
+  return (input: unknown) =>
+    Effect.absolve(Effect.sync(() => decode(schema)(input)));
 }

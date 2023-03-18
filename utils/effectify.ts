@@ -1,4 +1,4 @@
-import * as Z from "@effect/io/Effect";
+import * as Effect from "@effect/io/Effect";
 import { CustomPromisifyLegacy, CustomPromisifySymbol } from "node:util";
 
 type Callback<E, A> = (e: E, a: A) => void;
@@ -36,7 +36,7 @@ export function effectify<
   ...args: F extends CustomPromisify<infer TCustom>
     ? Parameters<TCustom>
     : never[]
-) => Z.Effect<
+) => Effect.Effect<
   never,
   E,
   F extends CustomPromisify<infer TCustom>
@@ -46,23 +46,23 @@ export function effectify<
 
 export function effectify<E, A>(
   fn: (cb: Callback<E, A>) => void,
-): () => Z.Effect<never, NonNullable<E>, A>;
+): () => Effect.Effect<never, NonNullable<E>, A>;
 
 export function effectify<E, A, X1>(
   fn: (x1: X1, cb: Callback<E, A>) => void,
-): (x1: X1) => Z.Effect<never, NonNullable<E>, A>;
+): (x1: X1) => Effect.Effect<never, NonNullable<E>, A>;
 
 export function effectify<E, A, X1, X2>(
   fn: (x1: X1, x2: X2, cb: Callback<E, A>) => void,
-): (x1: X1, x2: X2) => Z.Effect<never, NonNullable<E>, A>;
+): (x1: X1, x2: X2) => Effect.Effect<never, NonNullable<E>, A>;
 
 export function effectify<E, A, X1, X2, X3>(
   fn: (x1: X1, x2: X2, x3: X3, cb: Callback<E, A>) => void,
-): (x1: X1, x2: X2, x3: X3) => Z.Effect<never, NonNullable<E>, A>;
+): (x1: X1, x2: X2, x3: X3) => Effect.Effect<never, NonNullable<E>, A>;
 
 export function effectify<E, A, X1, X2, X3, X4>(
   fn: (x1: X1, x2: X2, x3: X3, x4: X4, cb: Callback<E, A>) => void,
-): (x1: X1, x2: X2, x3: X3, x4: X4) => Z.Effect<never, NonNullable<E>, A>;
+): (x1: X1, x2: X2, x3: X3, x4: X4) => Effect.Effect<never, NonNullable<E>, A>;
 
 export function effectify<E, A, X1, X2, X3, X4, X5>(
   fn: (x1: X1, x2: X2, x3: X3, x4: X4, x5: X5, cb: Callback<E, A>) => void,
@@ -72,16 +72,16 @@ export function effectify<E, A, X1, X2, X3, X4, X5>(
   x3: X3,
   x4: X4,
   x5: X5,
-) => Z.Effect<never, NonNullable<E>, A>;
+) => Effect.Effect<never, NonNullable<E>, A>;
 
 export function effectify(fn: Function) {
   return (...args: any[]) =>
-    Z.async<never, unknown, unknown>(resume => {
+    Effect.async<never, unknown, unknown>(resume => {
       fn(...args, (error: unknown, data: unknown) => {
         if (error) {
-          resume(Z.fail(error));
+          resume(Effect.fail(error));
         } else {
-          resume(Z.succeed(data));
+          resume(Effect.succeed(data));
         }
       });
     });
@@ -100,7 +100,7 @@ export function effectifyMapError<
   ...args: F extends CustomPromisify<infer TCustom>
     ? Parameters<TCustom>
     : never[]
-) => Z.Effect<
+) => Effect.Effect<
   never,
   E2,
   F extends CustomPromisify<infer TCustom>
@@ -111,41 +111,41 @@ export function effectifyMapError<
 export function effectifyMapError<E1, E2, A>(
   fn: (cb: Callback<E1, A>) => void,
   mapError: (e: NonNullable<E1>) => E2,
-): () => Z.Effect<never, E2, A>;
+): () => Effect.Effect<never, E2, A>;
 
 export function effectifyMapError<E1, E2, A, X1>(
   fn: (x1: X1, cb: Callback<E1, A>) => void,
   mapError: (e: NonNullable<E1>) => E2,
-): (x1: X1) => Z.Effect<never, E2, A>;
+): (x1: X1) => Effect.Effect<never, E2, A>;
 
 export function effectifyMapError<E1, E2, A, X1, X2>(
   fn: (x1: X1, x2: X2, cb: Callback<E1, A>) => void,
   mapError: (e: NonNullable<E1>) => E2,
-): (x1: X1, x2: X2) => Z.Effect<never, NonNullable<E2>, A>;
+): (x1: X1, x2: X2) => Effect.Effect<never, NonNullable<E2>, A>;
 
 export function effectifyMapError<E1, E2, A, X1, X2, X3>(
   fn: (x1: X1, x2: X2, x3: X3, cb: Callback<E2, A>) => void,
   mapError: (e: NonNullable<E1>) => E2,
-): (x1: X1, x2: X2, x3: X3) => Z.Effect<never, E2, A>;
+): (x1: X1, x2: X2, x3: X3) => Effect.Effect<never, E2, A>;
 
 export function effectifyMapError<E1, E2, A, X1, X2, X3, X4>(
   fn: (x1: X1, x2: X2, x3: X3, x4: X4, cb: Callback<E1, A>) => void,
   mapError: (e: NonNullable<E1>) => E2,
-): (x1: X1, x2: X2, x3: X3, x4: X4) => Z.Effect<never, E2, A>;
+): (x1: X1, x2: X2, x3: X3, x4: X4) => Effect.Effect<never, E2, A>;
 
 export function effectifyMapError<E1, E2, A, X1, X2, X3, X4, X5>(
   fn: (x1: X1, x2: X2, x3: X3, x4: X4, x5: X5, cb: Callback<E1, A>) => void,
   mapError: (e: NonNullable<E1>) => E2,
-): (x1: X1, x2: X2, x3: X3, x4: X4, x5: X5) => Z.Effect<never, E2, A>;
+): (x1: X1, x2: X2, x3: X3, x4: X4, x5: X5) => Effect.Effect<never, E2, A>;
 
 export function effectifyMapError(fn: Function, mapError: Function) {
   return (...args: any[]) =>
-    Z.async<never, unknown, unknown>(resume => {
+    Effect.async<never, unknown, unknown>(resume => {
       fn(...args, (error: unknown, data: unknown) => {
         if (error) {
-          resume(Z.fail(mapError(error)));
+          resume(Effect.fail(mapError(error)));
         } else {
-          resume(Z.succeed(data));
+          resume(Effect.succeed(data));
         }
       });
     });

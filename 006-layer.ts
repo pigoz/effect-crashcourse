@@ -1,5 +1,5 @@
 import { pipe } from "@effect/data/Function";
-import * as Z from "@effect/io/Effect";
+import * as Effect from "@effect/io/Effect";
 import * as ZL from "@effect/io/Layer";
 import * as Scope from "@effect/io/Scope";
 import * as Exit from "@effect/io/Exit";
@@ -20,15 +20,17 @@ import { Foo, Bar, FileDescriptor } from "utils/contexts";
  * Now we define some Effects using those services.
  * Everything should look familiar to the previous chapters.
  */
-const program1 = Z.gen(function* ($) {
-  const foo = yield* $(Z.service(Foo));
-  yield* $(Z.logInfo(`program1 ${JSON.stringify(foo)}`));
+const program1 = Effect.gen(function* ($) {
+  const foo = yield* $(Effect.service(Foo));
+  yield* $(Effect.logInfo(`program1 ${JSON.stringify(foo)}`));
 });
 
-const program2 = Z.gen(function* ($) {
-  const baz = yield* $(Z.service(FileDescriptor));
-  const bar = yield* $(Z.service(Bar));
-  yield* $(Z.logInfo(`program2 ${JSON.stringify(bar)} ${JSON.stringify(baz)}`));
+const program2 = Effect.gen(function* ($) {
+  const baz = yield* $(Effect.service(FileDescriptor));
+  const bar = yield* $(Effect.service(Bar));
+  yield* $(
+    Effect.logInfo(`program2 ${JSON.stringify(bar)} ${JSON.stringify(baz)}`),
+  );
 });
 
 // These are stupid Layers with no lifetime
@@ -37,17 +39,17 @@ const BarLive = ZL.succeed(Bar, { bar: 2 });
 
 // This is the exact same "scoped effect" we defined in 004-scope to manage a
 // FileDescriptor lifetime!
-export const resource: Z.Effect<Scope.Scope, never, FileDescriptor> =
-  Z.acquireRelease(
+export const resource: Effect.Effect<Scope.Scope, never, FileDescriptor> =
+  Effect.acquireRelease(
     pipe(
-      Z.promise(() => promisify(fs.open)("/dev/null", "w")),
-      Z.map(fd => ({ fd })),
-      Z.tap(() => Z.logInfo("FileDescriptor acquired")),
+      Effect.promise(() => promisify(fs.open)("/dev/null", "w")),
+      Effect.map(fd => ({ fd })),
+      Effect.tap(() => Effect.logInfo("FileDescriptor acquired")),
     ),
     ({ fd }) =>
       pipe(
-        Z.promise(() => promisify(fs.close)(fd)),
-        Z.tap(() => Z.logInfo("FileDescriptor released")),
+        Effect.promise(() => promisify(fs.close)(fd)),
+        Effect.tap(() => Effect.logInfo("FileDescriptor released")),
       ),
   );
 
@@ -80,10 +82,12 @@ export const FileDescriptorLive: ZL.Layer<never, never, FileDescriptor> =
  * anymore.
  */
 const makeAppRuntime = <R, E, A>(layer: ZL.Layer<R, E, A>) =>
-  Z.gen(function* ($) {
+  Effect.gen(function* ($) {
     const scope = yield* $(Scope.make());
     const ctx: Context.Context<A> = yield* $(ZL.buildWithScope(scope)(layer));
-    const runtime = yield* $(pipe(Z.runtime<A>(), Z.provideContext(ctx)));
+    const runtime = yield* $(
+      pipe(Effect.runtime<A>(), Effect.provideContext(ctx)),
+    );
 
     return {
       runtime,
@@ -106,7 +110,7 @@ const appLayerLive: ZL.Layer<never, never, AppLayer> = pipe(
 /*
  * We create a runtime and the close effect
  */
-const promise = Z.runPromise(makeAppRuntime(appLayerLive));
+const promise = Effect.runPromise(makeAppRuntime(appLayerLive));
 
 promise.then(({ runtime, close }) => {
   /*
@@ -114,7 +118,7 @@ promise.then(({ runtime, close }) => {
    * on node's exit. This will run the release Effect for all the resources in
    * our AppLayer.
    */
-  process.on("beforeExit", () => Z.runPromise(close));
+  process.on("beforeExit", () => Effect.runPromise(close));
 
   /*
    * Finally, we can run the effects reusing resources. In a webapp these could
