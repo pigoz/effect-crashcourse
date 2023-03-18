@@ -1,4 +1,4 @@
-import * as Z from "@effect/io/Effect";
+import * as Effect from "@effect/io/Effect";
 import * as Cause from "@effect/io/Cause";
 import * as Data from "@effect/data/Data";
 import * as Match from "@effect/match";
@@ -10,7 +10,7 @@ import { identity, pipe } from "@effect/data/Function";
  * Effect (and ZIO) have 3 main types of errors:
  *
  * 1) Failure
- * Generated using Z.fail and appears in the E type of Effect<R,E,A> (which is
+ * Generated using Effect.fail and appears in the E type of Effect<R,E,A> (which is
  * also known as the failure channel).
  *
  * These are also called 'expected errors' or 'typed errors' in ZIO,
@@ -22,7 +22,7 @@ import { identity, pipe } from "@effect/data/Function";
  * In spirit they are similar to checked exceptions.
  *
  * 2) Defect
- * Generated using Z.die, they don't appear in the Effect<R,E,A> type.
+ * Generated using Effect.die, they don't appear in the Effect<R,E,A> type.
  *
  * Also known as 'unexpected errors' or 'untyped errors' in ZIO, or
  * 'unrecoverable errors' in the Effect docs. (NOTE: despite the name there
@@ -117,13 +117,13 @@ function flaky() {
 }
 
 export const example = pipe(
-  Z.cond(
+  Effect.cond(
     flaky,
     () => "success1" as const,
     () => FooError({ error: "error1" }),
   ),
-  Z.flatMap(a =>
-    Z.cond(
+  Effect.flatMap(a =>
+    Effect.cond(
       flaky,
       () => [a, "success2"] as const,
       () => new BarError("error2"),
@@ -131,7 +131,7 @@ export const example = pipe(
   ),
 );
 
-example satisfies Z.Effect<
+example satisfies Effect.Effect<
   never,
   FooError | BarError,
   readonly ["success1", "success2"]
@@ -142,33 +142,33 @@ example satisfies Z.Effect<
  * This will remove FooError from the E in Effect<R, E, A> in `example`,
  * and unify the return type of the callback with `example`.
  */
-const catchTagSucceed = Z.catchTag(example, "FooError", e =>
-  Z.succeed(["recover", e.error] as const),
+const catchTagSucceed = Effect.catchTag(example, "FooError", e =>
+  Effect.succeed(["recover", e.error] as const),
 );
 
-catchTagSucceed satisfies Z.Effect<
+catchTagSucceed satisfies Effect.Effect<
   never,
   BarError,
   readonly ["success1", "success2"] | readonly ["recover", string]
 >;
 
-const catchTagFail = Z.catchTag(example, "FooError", e =>
-  Z.fail(new BazError(e.error)),
+const catchTagFail = Effect.catchTag(example, "FooError", e =>
+  Effect.fail(new BazError(e.error)),
 );
 
-catchTagFail satisfies Z.Effect<
+catchTagFail satisfies Effect.Effect<
   never,
   BarError | BazError,
   readonly ["success1", "success2"]
 >;
 
 /* catchTags allows to catch multiple errors from the failure channel */
-const catchTags = Z.catchTags(example, {
-  FooError: _e => Z.succeed("foo" as const),
-  BarError: _e => Z.succeed("bar" as const),
+const catchTags = Effect.catchTags(example, {
+  FooError: _e => Effect.succeed("foo" as const),
+  BarError: _e => Effect.succeed("bar" as const),
 });
 
-catchTags satisfies Z.Effect<
+catchTags satisfies Effect.Effect<
   never,
   never,
   readonly ["success1", "success2"] | "foo" | "bar"
@@ -177,8 +177,8 @@ catchTags satisfies Z.Effect<
 /* If you are integrating Effect in a legacy codebase and you defined
  * errors as tagged unions with a key different from _tag, you can use
  * Effect.catch. The following is equivalent to Effect.catchTag */
-const catch_ = Z.catch(example, "_tag", "FooError", e =>
-  Z.fail(new BazError(e.error)),
+const catch_ = Effect.catch(example, "_tag", "FooError", e =>
+  Effect.fail(new BazError(e.error)),
 );
 
 catch_ satisfies typeof catchTagFail;
@@ -189,11 +189,11 @@ catch_ satisfies typeof catchTagFail;
  *
  * NOTE: In the Effect internals, catchTag is built on top of catchAll!
  */
-const catchAll = Z.catchAll(example, e =>
-  Z.succeed(["recover", e._tag] as const),
+const catchAll = Effect.catchAll(example, e =>
+  Effect.succeed(["recover", e._tag] as const),
 );
 
-catchAll satisfies Z.Effect<
+catchAll satisfies Effect.Effect<
   never,
   never,
   | readonly ["success1", "success2"]
@@ -208,11 +208,11 @@ catchAll satisfies Z.Effect<
  * In real world code, you probably always want to use use catchTag instead
  * since it can both narrow and widen the error type.
  */
-const catchSome = Z.catchSome(example, e =>
+const catchSome = Effect.catchSome(example, e =>
   pipe(
     Match.value(e),
     Match.tag("FooError", e =>
-      Z.cond(
+      Effect.cond(
         () => e.error === "foo",
         () => "foo" as const,
         () => e,
@@ -222,7 +222,7 @@ const catchSome = Z.catchSome(example, e =>
   ),
 );
 
-catchSome satisfies Z.Effect<
+catchSome satisfies Effect.Effect<
   never,
   FooError | BarError,
   readonly ["success1", "success2"] | "foo"
@@ -231,9 +231,9 @@ catchSome satisfies Z.Effect<
 /* orElse* combinators are similar to catchAll but on top of failures they
  * also catch interruptions.
  */
-const fallback = Z.orElse(example, () => Z.succeed("foo" as const));
+const fallback = Effect.orElse(example, () => Effect.succeed("foo" as const));
 
-fallback satisfies Z.Effect<
+fallback satisfies Effect.Effect<
   never,
   never,
   readonly ["success1", "success2"] | "foo"
@@ -243,22 +243,28 @@ fallback satisfies Z.Effect<
  * orElseEither uses an Either to store the original success value, or the
  * fallback success value
  */
-const fallbackEither = Z.orElseEither(example, () => Z.succeed("foo" as const));
+const fallbackEither = Effect.orElseEither(example, () =>
+  Effect.succeed("foo" as const),
+);
 
-fallbackEither satisfies Z.Effect<
+fallbackEither satisfies Effect.Effect<
   never,
   never,
   E.Either<readonly ["success1", "success2"], "foo">
 >;
 
 /* The last option is folding, known as matching in Effect */
-const match = Z.match(
+const match = Effect.match(
   example,
   e => e._tag,
   x => x[0],
 );
 
-match satisfies Z.Effect<never, never, "FooError" | "BarError" | "success1">;
+match satisfies Effect.Effect<
+  never,
+  never,
+  "FooError" | "BarError" | "success1"
+>;
 
 /* Handling Defects
  * ================
@@ -294,11 +300,11 @@ Cause.match(
 
 // Effect.cause returns an Effect that succeeds with the argument's Cause, or
 // the emtpy Cause if the argument succeeds.
-const emptyCause = Z.cause(Z.succeed(1));
-emptyCause satisfies Z.Effect<never, never, Cause.Cause<never>>;
+const emptyCause = Effect.cause(Effect.succeed(1));
+emptyCause satisfies Effect.Effect<never, never, Cause.Cause<never>>;
 
-const failCause = Z.cause(Z.fail(1));
-failCause satisfies Z.Effect<never, never, Cause.Cause<number>>;
+const failCause = Effect.cause(Effect.fail(1));
+failCause satisfies Effect.Effect<never, never, Cause.Cause<number>>;
 
 /*
  * Since defects are unexpected errors, most of the time you just may want to
@@ -307,21 +313,21 @@ failCause satisfies Z.Effect<never, never, Cause.Cause<number>>;
 
 const dieingExample = pipe(
   example,
-  Z.flatMap(() => Z.die("💥")),
+  Effect.flatMap(() => Effect.die("💥")),
 );
 
 /*
- * Z.catchAllCause is similar to Z.catchAll but exposes the full Cause<E> in
+ * Effect.catchAllCause is similar to Effect.catchAll but exposes the full Cause<E> in
  * the callback, instead of just E
  */
-const catchAllCauseLog = Z.catchAllCause(dieingExample, cause =>
-  Z.logErrorCauseMessage("something went wrong", cause),
+const catchAllCauseLog = Effect.catchAllCause(dieingExample, cause =>
+  Effect.logErrorCauseMessage("something went wrong", cause),
 );
 
-catchAllCauseLog satisfies Z.Effect<never, never, void>;
+catchAllCauseLog satisfies Effect.Effect<never, never, void>;
 
 /*
- * Z.runPromise(catchAllCauseLog) will print a backtrace. i.e:
+ * Effect.runPromise(catchAllCauseLog) will print a backtrace. i.e:
  *
  * timestamp=2023-02-14T17:19:17.373Z level=ERROR fiber=#0 message="something went wrong" cause="
  * Error: 💥
@@ -341,20 +347,20 @@ catchAllCauseLog satisfies Z.Effect<never, never, void>;
 
 const interruptingExample = pipe(
   example,
-  Z.flatMap(() => Z.interrupt()),
+  Effect.flatMap(() => Effect.interrupt()),
 );
 
-const absorb = pipe(dieingExample, Z.absorb, Z.ignore);
-const resurrect = pipe(interruptingExample, Z.resurrect, Z.ignore);
+const absorb = pipe(dieingExample, Effect.absorb, Effect.ignore);
+const resurrect = pipe(interruptingExample, Effect.resurrect, Effect.ignore);
 
 const successful = pipe(
   absorb,
-  Z.flatMap(() => resurrect),
-  Z.flatMap(() => Z.succeed("recovered" as const)),
-  Z.zipLeft(Z.logInfo("exited successfully")),
+  Effect.flatMap(() => resurrect),
+  Effect.flatMap(() => Effect.succeed("recovered" as const)),
+  Effect.zipLeft(Effect.logInfo("exited successfully")),
 );
 
-successful satisfies Z.Effect<never, never, "recovered">;
+successful satisfies Effect.Effect<never, never, "recovered">;
 
 /* Failure to Defect
  *
@@ -363,11 +369,11 @@ successful satisfies Z.Effect<never, never, "recovered">;
  * the others to a defect.
  */
 
-const refineTagOrDie1 = Z.refineOrDie(example, failure =>
+const refineTagOrDie1 = Effect.refineOrDie(example, failure =>
   pipe(Match.value(failure), Match.tag("FooError", identity), Match.option),
 );
 
-refineTagOrDie1 satisfies Z.Effect<
+refineTagOrDie1 satisfies Effect.Effect<
   never,
   FooError,
   readonly ["success1", "success2"]
@@ -383,7 +389,7 @@ refineTagOrDie1 satisfies Z.Effect<
  */
 export const sandboxed = pipe(
   dieingExample,
-  Z.sandbox,
-  Z.catchSome(_x => O.some(Z.succeed(1))),
-  Z.unsandbox,
+  Effect.sandbox,
+  Effect.catchSome(_x => O.some(Effect.succeed(1))),
+  Effect.unsandbox,
 );

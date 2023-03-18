@@ -1,4 +1,4 @@
-import * as Z from "@effect/io/Effect";
+import * as Effect from "@effect/io/Effect";
 import * as Fiber from "@effect/io/Fiber";
 import * as Duration from "@effect/data/Duration";
 import * as Supervisor from "@effect/io/Supervisor";
@@ -19,42 +19,42 @@ import { pipe } from "@effect/data/Function";
 const TICK = 50;
 
 const slow = pipe(
-  Z.logInfo("slow task running"),
-  Z.delay(Duration.millis(TICK)),
-  Z.repeatN(4),
-  Z.onInterrupt(() => Z.logInfo("slow task interrupted")),
+  Effect.logInfo("slow task running"),
+  Effect.delay(Duration.millis(TICK)),
+  Effect.repeatN(4),
+  Effect.onInterrupt(() => Effect.logInfo("slow task interrupted")),
 );
 
-const failing = Z.fail("boom");
+const failing = Effect.fail("boom");
 
 export const infinite = pipe(
-  Z.logInfo("infinite task running"),
-  Z.delay(Duration.millis(TICK)),
-  Z.forever,
-  Z.onInterrupt(() => Z.logInfo("infinite task interrupted")),
+  Effect.logInfo("infinite task running"),
+  Effect.delay(Duration.millis(TICK)),
+  Effect.forever,
+  Effect.onInterrupt(() => Effect.logInfo("infinite task interrupted")),
 );
 
-export const example0 = Z.gen(function* ($) {
+export const example0 = Effect.gen(function* ($) {
   const sup = yield* $(Supervisor.track());
-  yield* $(pipe(Z.fork(infinite), Z.supervised(sup)));
+  yield* $(pipe(Effect.fork(infinite), Effect.supervised(sup)));
   //psu.onEnd();
   // const fiber = pipe(
   //   sup.value(),
-  //   Z.map(Chunk.map(fiber => ({ id: fiber.id(), status: fiber.status() }))),
-  //   Z.map(Chunk.unsafeHead),
+  //   Effect.map(Chunk.map(fiber => ({ id: fiber.id(), status: fiber.status() }))),
+  //   Effect.map(Chunk.unsafeHead),
   // );
   // console.log(yield* $(fiber));
 });
 
-Z.runPromise(example0);
+Effect.runPromise(example0);
 
-export const example1 = Z.gen(function* ($) {
-  yield* $(Z.forkDaemon(slow));
-  yield* $(Z.sleep(Duration.millis(TICK * 2 + TICK / 2)));
-  yield* $(Z.logInfo("done"));
+export const example1 = Effect.gen(function* ($) {
+  yield* $(Effect.forkDaemon(slow));
+  yield* $(Effect.sleep(Duration.millis(TICK * 2 + TICK / 2)));
+  yield* $(Effect.logInfo("done"));
 });
 
-// Z.runPromise(example1);
+// Effect.runPromise(example1);
 
 /*
  * This will print the running message 5 times
@@ -66,29 +66,29 @@ export const example1 = Z.gen(function* ($) {
  * fiber=#1 message="slow task running"
  */
 
-export const example2 = Z.gen(function* ($) {
-  const fiber = yield* $(Z.forkDaemon(slow));
-  yield* $(Z.sleep(Duration.millis(TICK * 2 + TICK / 2)));
-  yield* $(Z.logInfo("done"));
+export const example2 = Effect.gen(function* ($) {
+  const fiber = yield* $(Effect.forkDaemon(slow));
+  yield* $(Effect.sleep(Duration.millis(TICK * 2 + TICK / 2)));
+  yield* $(Effect.logInfo("done"));
   yield* $(Fiber.interrupt(fiber));
 });
 
-// Z.runPromise(example2);
+// Effect.runPromise(example2);
 /*
  * fiber=#1 message="slow task running"
  * fiber=#1 message="slow task running"
  * fiber=#0 message="done"
  */
 
-export const example3 = Z.gen(function* ($) {
-  const sup = Supervisor.fromEffect(Z.logInfo("asdf"));
-  const fiber = yield* $(Z.fork(pipe(failing, Z.supervised(sup))));
-  yield* $(Z.sleep(Duration.millis(TICK * 7 + TICK / 2)));
-  yield* $(Z.logInfo("done"));
+export const example3 = Effect.gen(function* ($) {
+  const sup = Supervisor.fromEffect(Effect.logInfo("asdf"));
+  const fiber = yield* $(Effect.fork(pipe(failing, Effect.supervised(sup))));
+  yield* $(Effect.sleep(Duration.millis(TICK * 7 + TICK / 2)));
+  yield* $(Effect.logInfo("done"));
   yield* $(Fiber.join(fiber));
 });
 
-// Z.runPromise(example3).catch(e => console.log(e));
+// Effect.runPromise(example3).catch(e => console.log(e));
 
 /*
  * boom

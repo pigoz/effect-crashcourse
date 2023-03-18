@@ -1,7 +1,7 @@
 import { pipe } from "@effect/data/Function";
 import { effectify, effectifyMapError } from "utils/effectify";
 import * as ReadonlyArray from "@effect/data/ReadonlyArray";
-import * as Z from "@effect/io/Effect";
+import * as Effect from "@effect/io/Effect";
 import * as fs from "node:fs";
 import { promisify } from "node:util";
 
@@ -28,11 +28,11 @@ const x = effectify(customSymbol);
 
 const y = effectify(foo);
 
-Z.runPromise(
+Effect.runPromise(
   pipe(
     readFile("dadaasd"),
-    Z.map(x => x.toString().split("\n")),
-    Z.map(ReadonlyArray.take(5)),
+    Effect.map(x => x.toString().split("\n")),
+    Effect.map(ReadonlyArray.take(5)),
   ),
 )
   .then(x => console.log(x))

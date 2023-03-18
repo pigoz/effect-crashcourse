@@ -1,5 +1,5 @@
 import { pipe } from "@effect/data/Function";
-import * as Z from "@effect/io/Effect";
+import * as Effect from "@effect/io/Effect";
 import * as Context from "@effect/data/Context";
 
 /* Callback hell.
@@ -31,15 +31,15 @@ export const Bar = Context.Tag<Bar>();
  * (ndr2: the `hell` type is for documentation purposes, it's not actually needed)
  */
 export const hell = pipe(
-  Z.service(CustomRandom),
-  Z.flatMap(random =>
+  Effect.service(CustomRandom),
+  Effect.flatMap(random =>
     pipe(
-      Z.service(Foo),
-      Z.flatMap(foo =>
+      Effect.service(Foo),
+      Effect.flatMap(foo =>
         pipe(
-          Z.service(Bar),
-          Z.flatMap(bar =>
-            Z.sync(() => {
+          Effect.service(Bar),
+          Effect.flatMap(bar =>
+            Effect.sync(() => {
               console.log("please stop!!!", random.next(), foo.foo, bar.bar);
               return "hell" as const;
             }),
@@ -55,9 +55,13 @@ export const hell = pipe(
  * API using the all combinator built in into Effect.
  */
 export const tuple = pipe(
-  Z.all(Z.service(CustomRandom), Z.service(Foo), Z.service(Bar)),
-  Z.flatMap(([random, foo, bar]) =>
-    Z.sync(() => {
+  Effect.all(
+    Effect.service(CustomRandom),
+    Effect.service(Foo),
+    Effect.service(Bar),
+  ),
+  Effect.flatMap(([random, foo, bar]) =>
+    Effect.sync(() => {
       console.log("not as bad!", random.next(), foo.foo, bar.bar);
       return "tuple" as const;
     }),
@@ -72,10 +76,10 @@ export const tuple = pipe(
  * To address this issue, the Effect team came up with an API that uses
  * generators to flatten the flatmap callback hell.
  */
-export const generator = Z.gen(function* ($) {
-  const random = yield* $(Z.service(CustomRandom));
-  const foo = yield* $(Z.service(Foo));
-  const bar = yield* $(Z.service(Bar));
+export const generator = Effect.gen(function* ($) {
+  const random = yield* $(Effect.service(CustomRandom));
+  const foo = yield* $(Effect.service(Foo));
+  const bar = yield* $(Effect.service(Bar));
 
   console.log("this is pretty cool!", random.next(), foo.foo, bar.bar);
   return "generator" as const;
@@ -84,13 +88,13 @@ export const generator = Z.gen(function* ($) {
 /* A legit question would be: How do you error out of a generator function?
  * Just yield a failing Effect
  */
-export const generatorerr = Z.gen(function* ($) {
-  const random = yield* $(Z.service(CustomRandom));
-  const foo = yield* $(Z.service(Foo));
-  const bar = yield* $(Z.service(Bar));
+export const generatorerr = Effect.gen(function* ($) {
+  const random = yield* $(Effect.service(CustomRandom));
+  const foo = yield* $(Effect.service(Foo));
+  const bar = yield* $(Effect.service(Bar));
 
   if (random.next() > 0.5) {
-    yield* $(Z.fail("bad random" as const));
+    yield* $(Effect.fail("bad random" as const));
   }
 
   console.log("this is pretty cool!", random.next(), foo.foo, bar.bar);
@@ -106,12 +110,12 @@ export const generatorerr = Z.gen(function* ($) {
  * instances the Do notation the only option.
  */
 export const doNotation = pipe(
-  Z.Do(),
-  Z.bind("random", () => Z.service(CustomRandom)),
-  Z.bind("foo", () => Z.service(Foo)),
-  Z.bind("bar", () => Z.service(Bar)),
-  Z.flatMap(({ random, foo, bar }) =>
-    Z.sync(() =>
+  Effect.Do(),
+  Effect.bind("random", () => Effect.service(CustomRandom)),
+  Effect.bind("foo", () => Effect.service(Foo)),
+  Effect.bind("bar", () => Effect.service(Bar)),
+  Effect.flatMap(({ random, foo, bar }) =>
+    Effect.sync(() =>
       console.log("this is pretty cool!", random.next(), foo.foo, bar.bar),
     ),
   ),
@@ -136,7 +140,7 @@ export const doNotation = pipe(
   },
   "Gen Function $ (wrapped)": {
     "prefix": "zgen$",
-    "body": ["Z.gen(function* ($) {\n\t$0\n})"],
+    "body": ["Effect.gen(function* ($) {\n\t$0\n})"],
     "description": "Generator function with $ input"
   },
   "Gen Function $ (wrapped)": {

@@ -1,4 +1,4 @@
-import * as Z from "@effect/io/Effect";
+import * as Effect from "@effect/io/Effect";
 import * as Exit from "@effect/io/Exit";
 import * as Fiber from "@effect/io/Fiber";
 
@@ -24,26 +24,26 @@ class Identifier {
 const sleeper = (id: number, seconds = 1000) => {
   const identifier = new Identifier(id);
   return pipe(
-    Z.sleep(Duration.millis(seconds)),
-    Z.tap(() => Z.logInfo(`waked from ${identifier.id}`)),
-    Z.flatMap(() => Z.succeed(identifier)),
+    Effect.sleep(Duration.millis(seconds)),
+    Effect.tap(() => Effect.logInfo(`waked from ${identifier.id}`)),
+    Effect.flatMap(() => Effect.succeed(identifier)),
   );
 };
 
-export const example1 = Z.gen(function* ($) {
-  yield* $(Z.logInfo("before"));
+export const example1 = Effect.gen(function* ($) {
+  yield* $(Effect.logInfo("before"));
 
   type fiberT = Fiber.RuntimeFiber<never, Identifier>;
-  const fiber: fiberT = yield* $(Z.fork(sleeper(1)));
+  const fiber: fiberT = yield* $(Effect.fork(sleeper(1)));
 
-  yield* $(Z.logInfo("after"));
+  yield* $(Effect.logInfo("after"));
 
   const id: Identifier = yield* $(Fiber.join(fiber));
 
-  yield* $(Z.logInfo(JSON.stringify(id)));
+  yield* $(Effect.logInfo(JSON.stringify(id)));
 });
 
-// Z.runPromise(example1);
+// Effect.runPromise(example1);
 
 /*
  * Running it yields:
@@ -58,34 +58,34 @@ export const example1 = Z.gen(function* ($) {
 
 const longFailing = (id: Identifier) =>
   pipe(
-    Z.sleep(Duration.seconds(1)),
-    Z.flatMap(() => Z.fail("blah" as const)),
-    Z.tap(() => Z.logInfo(`waked from ${id.id}`)),
-    Z.flatMap(() => Z.succeed(id)),
+    Effect.sleep(Duration.seconds(1)),
+    Effect.flatMap(() => Effect.fail("blah" as const)),
+    Effect.tap(() => Effect.logInfo(`waked from ${id.id}`)),
+    Effect.flatMap(() => Effect.succeed(id)),
   );
 
 /*
  * Using Fiber.join / joinAll will result in a catchable error when running a
  * failing effect
  */
-export const example2 = Z.gen(function* ($) {
-  const fiber = yield* $(Z.fork(longFailing(new Identifier(1))));
+export const example2 = Effect.gen(function* ($) {
+  const fiber = yield* $(Effect.fork(longFailing(new Identifier(1))));
   (yield* $(Fiber.join(fiber))) satisfies Identifier;
 });
 
-// Z.runPromise(example2).catch(x => console.log('error', x));
+// Effect.runPromise(example2).catch(x => console.log('error', x));
 
 /*
  * An alternative is using wait which gives an Exit back
  */
 
-export const example3 = Z.gen(function* ($) {
-  const fiber = yield* $(Z.fork(longFailing(new Identifier(1))));
+export const example3 = Effect.gen(function* ($) {
+  const fiber = yield* $(Effect.fork(longFailing(new Identifier(1))));
 
   type exitT = Exit.Exit<"blah", Identifier>;
   const exit: exitT = yield* $(Fiber.await(fiber));
 
-  yield* $(Z.logInfo(JSON.stringify(exit)));
+  yield* $(Effect.logInfo(JSON.stringify(exit)));
 });
 
 /*
@@ -100,10 +100,10 @@ export const example3 = Z.gen(function* ($) {
 
 const effects = [sleeper(1, 300), sleeper(2, 100), sleeper(3, 200)];
 
-export const example4 = Z.gen(function* ($) {
+export const example4 = Effect.gen(function* ($) {
   // Chunk is an "Array-like" data structure in fp-ts
   type idsT = Chunk.Chunk<Identifier>;
-  const ids: idsT = yield* $(Z.collectAllPar(effects));
+  const ids: idsT = yield* $(Effect.collectAllPar(effects));
 
   console.log(
     pipe(
@@ -114,7 +114,7 @@ export const example4 = Z.gen(function* ($) {
   );
 });
 
-// Z.runPromise(example4);
+// Effect.runPromise(example4);
 
 /*
  * fiber=#2 message="waked from 2"
@@ -123,26 +123,26 @@ export const example4 = Z.gen(function* ($) {
  * [ 1, 2, 3 ]
  */
 
-export const example5 = Z.gen(function* ($) {
-  const identifiers: readonly Z.Effect<never, never, number>[] = pipe(
+export const example5 = Effect.gen(function* ($) {
+  const identifiers: readonly Effect.Effect<never, never, number>[] = pipe(
     effects,
     ReadonlyArray.map(effect =>
       pipe(
         effect,
-        Z.map(_ => _.id),
+        Effect.map(_ => _.id),
       ),
     ),
   );
 
   const sum = pipe(
     identifiers,
-    Z.reduceAllPar(Z.succeed(0), (acc, a) => acc + a),
+    Effect.reduceAllPar(Effect.succeed(0), (acc, a) => acc + a),
   );
 
   console.log(yield* $(sum));
 });
 
-// Z.runPromise(example5);
+// Effect.runPromise(example5);
 
 /*
  * fiber=#2 message="waked from 2"
@@ -151,34 +151,34 @@ export const example5 = Z.gen(function* ($) {
  * 6
  */
 
-export const example6 = Z.gen(function* ($) {
+export const example6 = Effect.gen(function* ($) {
   const winner = pipe(
-    Z.raceAll(effects), // Races effects with Z.never()
-    Z.map(_ => _.id),
+    Effect.raceAll(effects), // Races effects with Effect.never()
+    Effect.map(_ => _.id),
   );
 
   console.log(yield* $(winner));
 });
 
-// Z.runPromise(example6);
+// Effect.runPromise(example6);
 
 /*
  * fiber=#2 message="waked from 2"
  * 2
  */
 
-export const example7 = Z.gen(function* ($) {
+export const example7 = Effect.gen(function* ($) {
   const identifiers = pipe(
     [7, 8, 9],
-    Z.forEachPar(x => sleeper(x)), // Effect<never, never, Chunk<Identifier>>
-    Z.map(Chunk.map(_ => _.id.toString())), // Effect<never, never, Chunk<string>>
-    Z.map(Chunk.join(",")), // Effect<never, never, string>
+    Effect.forEachPar(x => sleeper(x)), // Effect<never, never, Chunk<Identifier>>
+    Effect.map(Chunk.map(_ => _.id.toString())), // Effect<never, never, Chunk<string>>
+    Effect.map(Chunk.join(",")), // Effect<never, never, string>
   );
 
   console.log(yield* $(identifiers));
 });
 
-// Z.runPromise(example7);
+// Effect.runPromise(example7);
 
 /*
  * fiber=#1 message="waked from 7"
