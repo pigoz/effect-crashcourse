@@ -4,11 +4,16 @@ import * as Effect from "@effect/io/Effect";
 import * as Layer from "@effect/io/Layer";
 import * as Context from "@effect/data/Context";
 
-/* Effect is inspired by ZIO (a Scala library) - the fundamental data type is Effect
+/*
+ * The unique insight of Effect is that errors and requirements/dependencies should be modeled in your program's control flow.
+ * This is in contrast to the typical TypeScript code, where a function can either return a value or throw an exception.
+ * In typical TypeScript code, you typically don't model a function that can fail, or a function that needs some external dependencies.
+ *
+ * The data type of Effect looks like the following:
  *
  * Effect<R, E, A>
  *
- * The computation has inputs (R), can fail (E) or succeed (A).
+ * The computation has requirements (R), can fail (E) or succeed (A).
  *
  * You can loosely think of Effect<R, E, A> as similar to:
  *
@@ -18,7 +23,12 @@ import * as Context from "@effect/data/Context";
  *  - E is the type of the error in case the computation fails
  *  - A is the return type in case the computation succeeds
  *
- * R will be covered in more detail in later chapters, don't worry if it doesn't make sense yet.
+ * Think of these as separate channels, all of which you can interact with in your program.
+ * R is the requirements channel, E is the failure/error channel, and A is the success channel.
+ *
+ * R will be covered in more detail later, don't worry if it doesn't make sense yet. Focus on understanding E and A first.
+ *
+ * Effect is inspired by ZIO (a Scala library)
  */
 
 // Here's some basic constructors
@@ -50,7 +60,7 @@ export const sometimesFailingEffect = pipe(
 
 // Same thing but using the number generator provided by Effect
 /* NOTE:
- * Effect.flatMap(Effect.fromEither) is so common that there's a built in combinator
+ * Effect.flatMap(Effect.fromEither) is so common that there's a built in function
  * that's equivalent to it: Effect.absolve
  */
 export const sometimesFailingEffectAbsolved = pipe(
@@ -81,6 +91,7 @@ Effect.runPromise(sometimesFailingEffectAbsolved); // executes y
  * and lift those into Effects later, or use functions that return the Effect data type everywhere for ease of use.
  */
 
+// Can you figure out what cond does by looking at this example? (Hint: You can also hover over cond to see some info)
 function flakyEffectFromRandom(random: number) {
   return Effect.cond(
     () => random > 0.5,
@@ -145,7 +156,7 @@ export const serviceExample = pipe(
  * to parameter of type 'Effect<never, "fail", number>'.
  * Type 'CustomRandom' is not assignable to type 'never'.
  *
- * Effect has a handful of combinators that allow us to provide an implementation.
+ * Effect has a handful of functions that allow us to provide an implementation.
  * You will see this in more detail in the following sections and chapters.
  *
  * For example, we can use provideService, provideContext, provideLayer, to provide
