@@ -54,7 +54,7 @@ import { identity, pipe } from "@effect/data/Function";
  * handle "tagged" error objects in a typesafe way.
  *
  * You can use either Data.Case or Typescript Classes to define such error
- * types. i.e.:
+ * types.
  */
 
 // interface option
@@ -65,7 +65,16 @@ export interface FooError extends Data.Case {
 
 export const FooError = Data.tagged<FooError>("FooError");
 
-// same thing as above but with classes
+// class option (notice a tag only needs to be provided in the constructor, not in the interface)
+// It's also easier to create a function that takes a tag label and returns an anonymous class
+// so you can re-use the same error interface payload with different tags and class names, e.g. BarError, BazError
+export interface FooErrorC {
+  readonly error: string;
+}
+
+export class FooErrorClass extends Data.TaggedClass("FooError")<FooErrorC>() {}
+
+// You can also write classes manually
 export class BarError {
   readonly _tag = "BarError";
   constructor(readonly error: string) {}
@@ -77,9 +86,7 @@ export class BazError {
 }
 
 /*
- * As you can probably tell, classes are way more concise, but Data.Case has
- * the added benefit of providing an Equal implementation.
- *
+ * Data.Case has the added benefit of providing an Equal implementation.
  * That allows to compare errors by value instead of reference.
  */
 
@@ -89,6 +96,11 @@ import * as Equal from "@effect/data/Equal";
 export const isEqual = Equal.equals(
   FooError({ error: "foo1" }),
   FooError({ error: "foo1" }),
+);
+
+export const isEqualClass = Equal.equals(
+  new FooErrorClass({ error: "foo1" }),
+  new FooErrorClass({ error: "foo1" }),
 );
 
 // This is not true, foo1 and foo2 are different!
