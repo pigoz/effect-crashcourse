@@ -20,7 +20,7 @@ export function decode<A>(schema: Schema.Schema<A>) {
     );
 }
 
-export function decodee<A>(schema: Schema.Schema<A>) {
+export function decodeAbsolve<A>(schema: Schema.Schema<A>) {
   return (input: unknown) =>
     Effect.absolve(Effect.sync(() => decode(schema)(input)));
 }
