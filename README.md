@@ -7,6 +7,7 @@ This guide explores some of the concepts from the new version of [Effect](https:
 Start reading from [001-basic.ts](001-basic.ts)!
 
 ### Local environment
+
 1. Install the packages in package.json with the package manager of your choice. (e.g. `npm install`)
 2. Any file in this project can be run with the `run-file` script in package.json (e.g. `npm run run-file 001-basic.ts` or `yarn run-file 001-basic.ts`). You may also use `tsx` directly if you'd like (`npx tsx 001-basic.ts`).
 
@@ -14,10 +15,10 @@ Start reading from [001-basic.ts](001-basic.ts)!
 
 [![Open in StackBlitz](https://developer.stackblitEffect.com/img/open_in_stackblitz_small.svg)](https://stackblitEffect.com/github/pigoz/effect-crashcourse?file=001-basic.ts)
 
-
 ### Questions?
-Feel free to open an issue with ideas for improvement or contributions.
+
+Feel free to open an issue with ideas for improvement, questions, or contributions.
 
 #### Contributors
-Feel free to open a PR to improve the content.
 
+Feel free to open a PR to improve the content.
