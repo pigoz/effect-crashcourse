@@ -10,8 +10,9 @@ import { pipe } from "@effect/data/Function";
 /*
  * Until now we executed effects in a way that made them look synchronous.
  *
- * That's actually one of the strong points of effect-ts: making async code
- * look synchronous is very useful in application code.
+ * That's one special aspect of Effect - you can mix async and sync code in the same program, without labeling functions separately.
+ * All functions can be "Effect" functions, and you can mix them together.
+ * For more on this topic: https://journal.stuffwithstuff.com/2015/02/01/what-color-is-your-function/
  *
  * To execute an effect without blocking the current process, we can use fibers,
  * which are a lightweight concurrency mechanism.
@@ -33,6 +34,7 @@ const sleeper = (id: number, seconds = 1000) => {
 export const example1 = Effect.gen(function* ($) {
   yield* $(Effect.logInfo("before"));
 
+  // These types can be inferred, we're just explicitly annotating it here
   type fiberT = Fiber.RuntimeFiber<never, Identifier>;
   const fiber: fiberT = yield* $(Effect.fork(sleeper(1)));
 
@@ -76,7 +78,7 @@ export const example2 = Effect.gen(function* ($) {
 // Effect.runPromise(example2).catch(x => console.log('error', x));
 
 /*
- * An alternative is using wait which gives an Exit back
+ * An alternative is using await which gives an Exit back
  */
 
 export const example3 = Effect.gen(function* ($) {
@@ -89,19 +91,19 @@ export const example3 = Effect.gen(function* ($) {
 });
 
 /*
- * As is any other concurrent code using fork/join (i.e.: pthreads), there are
- * many pitfalls in writing correct code with those low level primitives.
+ * Effect makes it easier to write concurrent code
+ * despite concurrent code usually being notoriously difficult to write correctly.
  *
  * Effect comes with a many high level functions for common concurrency patterns
  *
  * It's fairly easy to find them with autocompletion because they all have
- * "Par" in their name: collectPar, collectAllPar, etc.
+ * "Par" in their name: allPar, collectPar, collectAllPar, etc.
  */
 
 const effects = [sleeper(1, 300), sleeper(2, 100), sleeper(3, 200)];
 
 export const example4 = Effect.gen(function* ($) {
-  // Chunk is an "Array-like" data structure in fp-ts
+  // Chunk is an "Array-like" immutable data structure in @effect/data
   type idsT = Chunk.Chunk<Identifier>;
   const ids: idsT = yield* $(Effect.collectAllPar(effects));
 
