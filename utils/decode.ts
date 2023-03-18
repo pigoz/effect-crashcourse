@@ -1,26 +1,26 @@
 import * as Effect from "@effect/io/Effect";
-import * as Schema from "@effect/schema";
-import * as E from "@effect/data/Either";
+import * as Schema from "@effect/schema/Schema";
+import * as Either from "@effect/data/Either";
 import { pipe } from "@effect/data/Function";
-import { formatErrors } from "@effect/schema/formatter/Tree";
+import { formatErrors } from "@effect/schema/TreeFormatter";
 
 export class DecodeError {
   readonly _tag = "DecodeError";
   constructor(readonly error: string) {}
 }
 
-export function decode<A>(schema: Schema.Schema<A>) {
+export function decodeEither<A>(schema: Schema.Schema<A>) {
   return (input: unknown) =>
     pipe(
-      Schema.decode<A>(schema)(input, {
+      Schema.decodeEither(schema)(input, {
         allErrors: true,
         isUnexpectedAllowed: true,
       }),
-      E.mapLeft(_ => new DecodeError(formatErrors(_))),
+      Either.mapLeft(_ => new DecodeError(formatErrors(_))),
     );
 }
 
 export function decodeAbsolve<A>(schema: Schema.Schema<A>) {
   return (input: unknown) =>
-    Effect.absolve(Effect.sync(() => decode(schema)(input)));
+    Effect.absolve(Effect.sync(() => decodeEither(schema)(input)));
 }

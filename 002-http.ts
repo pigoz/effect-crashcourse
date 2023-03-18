@@ -1,7 +1,7 @@
 import { pipe } from "@effect/data/Function";
 import * as Effect from "@effect/io/Effect";
-import * as Schema from "@effect/schema";
-import { decode } from "./utils/decode";
+import * as Schema from "@effect/schema/Schema";
+import { decodeEither } from "./utils/decode";
 
 /*
  * The most iconic asynchronous example in JavaScript is fetching from APIs.
@@ -43,7 +43,7 @@ const GistSchema = Schema.struct({
   ),
 });
 
-interface Gist extends Schema.Infer<typeof GistSchema> {}
+interface Gist extends Schema.To<typeof GistSchema> {}
 
 const program = pipe(
   // Effect.Effect<never, 'fetch', Response>
@@ -53,7 +53,7 @@ const program = pipe(
   Effect.flatMap(getJson),
 
   // Effect.Effect<never, 'fetch' | 'json', Either<DecodeError, Gist>>
-  Effect.map(decode<Gist>(GistSchema)),
+  Effect.map(decodeEither<Gist>(GistSchema)),
 
   // Effect.Effect<never, 'fetch' | 'json' | DecodeError, Gist>
   Effect.flatMap(Effect.fromEither),
