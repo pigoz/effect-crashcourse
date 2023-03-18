@@ -2,7 +2,7 @@
 
 This guide explores some of the concepts from the new version of [Effect](https://github.com/Effect-TS/io), and is written from the point of view of a casual fp-ts 2 user.
 
-## Usage
+### Usage
 
 Start reading from [001-basic.ts](001-basic.ts)!
 
@@ -13,3 +13,11 @@ Start reading from [001-basic.ts](001-basic.ts)!
 ### Web-based environment
 
 [![Open in StackBlitz](https://developer.stackblitEffect.com/img/open_in_stackblitz_small.svg)](https://stackblitEffect.com/github/pigoz/effect-crashcourse?file=001-basic.ts)
+
+
+### Questions?
+Feel free to open an issue with ideas for improvement or contributions.
+
+#### Contributors
+Feel free to open a PR to improve the content.
+
