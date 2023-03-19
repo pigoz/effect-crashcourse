@@ -9,7 +9,7 @@ import * as Context from "@effect/data/Context";
  * should be modeled in your program's control flow.
  *
  * This is in contrast to your typical TypeScript code, where a function can
- * either return a "success" value or throw an exception.
+ * either return a "success" value or throw an untyped exception.
  *
  * The data type of Effect looks like the following:
  *
