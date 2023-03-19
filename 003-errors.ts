@@ -10,8 +10,8 @@ import { identity, pipe } from "@effect/data/Function";
  * Effect has 3 main types of errors:
  *
  * 1) Failure
- * Generated using Effect.fail and appears in the E type of Effect<R,E,A> (which is
- * also known as the failure channel).
+ * Generated using Effect.fail and appears in the E type of Effect<R, E, A>
+ * (which is also known as the failure channel).
  *
  * These are also called 'expected errors' or 'typed errors' or 'recoverable errors'.
  *
@@ -21,10 +21,12 @@ import { identity, pipe } from "@effect/data/Function";
  * In spirit they are similar to checked exceptions.
  *
  * 2) Defect
- * Generated using Effect.die (and some other similar functions), they don't appear in the Effect<R,E,A> type.
+ * Generated using Effect.die (and some other similar functions), they don't
+ * appear in the Effect<R,E,A> type.
  *
  * Also known as 'unexpected errors' or 'untyped errors' or 'unrecoverable errors'.
- * (NOTE: despite the name there are ways to recover from them but it's way more verbose compared to failures).
+ * (NOTE: despite the name there are ways to recover from them but it's way
+ * more verbose compared to failures).
  *
  * These are unexpected errors which are not part of the domain, nor the
  * control flow.
@@ -37,7 +39,8 @@ import { identity, pipe } from "@effect/data/Function";
  *
  * 3) Interruption
  * Generated with Effect.interrupt to interrupt the executing Fiber, or
- * Fiber.interrupt(fiber) to interrupt a `fiber`. We will talk more about fibers later.
+ * Fiber.interrupt(fiber) to interrupt a `fiber`. We will talk more about
+ * fibers later.
  *
  * An interruption will cause the fiber to return an Exit.Failure containing
  * a Cause.interrupt.
@@ -51,13 +54,15 @@ import { identity, pipe } from "@effect/data/Function";
  *
  * In reality it's better to fail with an object that has a _tag field.
  * This is because Effect comes with a few functions built specifically to
- * handle "tagged" error objects in a typesafe way.
+ * handle "tagged" error objects in a typesafe way (i.e. catchTag).
  *
- * You can use either Data.Case or Typescript Classes to define such error
- * types.
+ * To define such errors you can use:
+ *  - interface extending Data.Case in combination with Data.tagged
+ *  - Data.TaggedClass (most concise option using Data)
+ *  - plain Typescript classes
  */
 
-// interface option
+// interface extending Data.Case in combination with Data.tagged
 export interface FooError extends Data.Case {
   readonly _tag: "FooError";
   readonly error: string;
@@ -65,16 +70,12 @@ export interface FooError extends Data.Case {
 
 export const FooError = Data.tagged<FooError>("FooError");
 
-// class option (notice a tag only needs to be provided in the constructor, not in the interface)
-// It's also easier to create a function that takes a tag label and returns an anonymous class
-// so you can re-use the same error interface payload with different tags and class names, e.g. BarError, BazError
-export interface FooErrorC {
+// Data.TaggedClass
+export class FooErrorClass extends Data.TaggedClass("FooError")<{
   readonly error: string;
-}
+}>() {}
 
-export class FooErrorClass extends Data.TaggedClass("FooError")<FooErrorC>() {}
-
-// You can also write classes manually
+// plain Typescript classes
 export class BarError {
   readonly _tag = "BarError";
   constructor(readonly error: string) {}
@@ -86,8 +87,8 @@ export class BazError {
 }
 
 /*
- * Data.Case has the added benefit of providing an Equal implementation.
- * That allows to compare errors by value instead of reference.
+ * Errors defined through Data have the added benefit of providing an Equal
+ * implementation. That allows to compare errors by value instead of reference.
  */
 
 import * as Equal from "@effect/data/Equal";
@@ -157,14 +158,16 @@ const catchTagSucceed = Effect.catchTag(example, "FooError", e =>
   Effect.succeed(["recover", e.error] as const),
 );
 
-// Notice how FooError desapeared from the E type, and A now has a union of the two possible return types
+// Notice how FooError desapeared from the E type, and A now has a union of
+// the two possible return types
 catchTagSucceed satisfies Effect.Effect<
   never,
   BarError,
   readonly ["success1", "success2"] | readonly ["recover", string]
 >;
 
-// Here, we caught FooError but returned another error called BazError! Now the E type has both BarError and BazError, and A didn't change
+// Here, we caught FooError but returned another error called BazError!
+// Now the E type has both BarError and BazError, and A didn't change
 const catchTagFail = Effect.catchTag(example, "FooError", e =>
   Effect.fail(new BazError(e.error)),
 );
@@ -176,7 +179,8 @@ catchTagFail satisfies Effect.Effect<
 >;
 
 /* catchTags allows to catch multiple errors from the failure channel */
-// we handled both errors and returned a string literal, which is now part of the A type
+// we handled both errors and returned a string literal, which is now part of
+// the A type
 const catchTags = Effect.catchTags(example, {
   FooError: _e => Effect.succeed("foo" as const),
   BarError: _e => Effect.succeed("bar" as const),
@@ -226,7 +230,6 @@ catchAll satisfies Effect.Effect<
  */
 const catchSome = Effect.catchSome(example, e =>
   pipe(
-    // Match is a pattern matching library from the Effect ecosystem (@effect/match)
     Match.value(e),
     Match.tag("FooError", e =>
       Effect.cond(
@@ -239,6 +242,9 @@ const catchSome = Effect.catchSome(example, e =>
   ),
 );
 
+// Note: Match (@effect/match) is a pattern matching library from the Effect
+// ecosystem
+
 catchSome satisfies Effect.Effect<
   never,
   FooError | BarError,
@@ -247,7 +253,9 @@ catchSome satisfies Effect.Effect<
 
 /* orElse* functions are similar to catchAll but on top of failures they
  * also catch interruptions.
- * Notice how E is now the never type, and A is a union of the two possible return types
+ *
+ * Notice how E is now the never type, and A is a union of the two possible
+ * return types
  */
 const fallback = Effect.orElse(example, () => Effect.succeed("foo" as const));
 
@@ -335,8 +343,8 @@ const dieExample = pipe(
 );
 
 /*
- * Effect.catchAllCause is similar to Effect.catchAll but exposes the full Cause<E> in
- * the callback, instead of just E
+ * Effect.catchAllCause is similar to Effect.catchAll but exposes the full
+ * Cause<E> in the callback, instead of just E
  */
 const catchAllCauseLog = Effect.catchAllCause(dieExample, cause =>
   Effect.logErrorCauseMessage("something went wrong", cause),
@@ -375,9 +383,15 @@ const successful = pipe(
   absorb,
   Effect.flatMap(() => resurrect),
   Effect.flatMap(() => Effect.succeed("recovered" as const)),
-  // Can you figure out what zipLeft does given its type signature and the type signature of "successful"?
   Effect.zipLeft(Effect.logInfo("exited successfully")),
 );
+
+/*
+ * Note: Effect.zipLeft(a, b) combines (zips) a and b in a single Effect that
+ * runs a and b sequentially, and returns the return value of a.
+ *
+ * Here it's used to run logInfo but discard it's result.
+ */
 
 successful satisfies Effect.Effect<never, never, "recovered">;
 

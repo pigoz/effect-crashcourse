@@ -10,9 +10,8 @@ import { pipe } from "@effect/data/Function";
 /*
  * Until now we executed effects in a way that made them look synchronous.
  *
- * That's one special aspect of Effect - you can mix async and sync code in the same program, without labeling functions separately.
- * All functions can be "Effect" functions, and you can mix them together.
- * For more on this topic: https://journal.stuffwithstuff.com/2015/02/01/what-color-is-your-function/
+ * That's one special aspect of Effect - you can mix async and sync code in
+ * the same program, without labeling functions separately.
  *
  * To execute an effect without blocking the current process, we can use fibers,
  * which are a lightweight concurrency mechanism.

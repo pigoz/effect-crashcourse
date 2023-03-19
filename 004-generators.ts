@@ -4,8 +4,9 @@ import * as Context from "@effect/data/Context";
 
 /* Callback hell.
  *
- * If you have written any JavaScript you have seen it. Sadly, even Effect or other code written in a functional style is
- * not immune to it, even inside high quality codebases.
+ * If you have written any JavaScript you have seen it. Sadly, even fp-ts code
+ * or other code written in a functional style is not immune to it, even inside
+ * high quality codebases.
  */
 
 import { CustomRandom } from "001-basic";
@@ -65,9 +66,11 @@ export const tuple = pipe(
 );
 
 /*
- * But you would still end up with messy code in real application code, not to mention testing code!
- * To address this issue, Effect has an API that uses
- * generators to flatten the flatmap callback hell.
+ * But you would still end up with messy code in real application code, not to
+ * mention testing code!
+ *
+ * To address this issue, Effect has an API that uses generators to flatten
+ * the flatmap callback hell.
  */
 export const generator = Effect.gen(function* ($) {
   const random = yield* $(Effect.service(CustomRandom));
@@ -129,11 +132,6 @@ export const doNotation = pipe(
   "Gen Function $": {
     "prefix": "gen$",
     "body": ["function* ($) {\n\t$0\n}"],
-    "description": "Generator function with $ input"
-  },
-  "Gen Function $ (wrapped)": {
-    "prefix": "zgen$",
-    "body": ["Effect.gen(function* ($) {\n\t$0\n})"],
     "description": "Generator function with $ input"
   },
   "Gen Function $ (wrapped)": {

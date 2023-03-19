@@ -11,8 +11,11 @@ import { decodeEither } from "./utils/decode";
 const id = "97459c0045f373f4eaf126998d8f65dc";
 
 /*
- * Here, we use Effect.tryCatchPromise to wrap a Promise-returning function into an Effect
- * The first argument is a promise returning function, the second is a function that handles the potential exception
+ * Here, we use Effect.tryCatchPromise to wrap a Promise-returning function
+ * into an Effect
+ *
+ * The first argument is a promise returning function, the second is a function
+ * that handles the potential exception
  */
 const fetchGist = (id: string) =>
   Effect.tryCatchPromise(
@@ -27,8 +30,9 @@ const getJson = (res: Response) =>
   ); // Effect.Effect<never, "json", unknown>
 
 /*
- * Schema is a library in the Effect ecosystem that allows you to define a type-safe schema for your data
- * It may look similar to libraries like io-ts or zod
+ * Schema is a library in the Effect ecosystem that allows you to define a
+ * type-safe schema for your data
+ * It may look familiar if you have used libraries like io-ts or zod
  */
 const GistSchema = Schema.struct({
   url: Schema.string,

@@ -117,8 +117,8 @@ export const useFileDescriptorSmarter: useFileDescriptor =
 /* While the first example didn't have any error handling, this has the added
  * benefit of being a spiritual equivalent to try-catch.
  *
- * If the acquire effect succeeds, the end
- * effect is guaranteed to be run regardless of the use effect's result (similar to a finally clause).
+ * If the acquire effect succeeds, the release effect is guaranteed to be run
+ * regardless of the use effect's result (similar to a finally clause).
  *
  * That was still quite long to write, and using scopes is very common.
  *

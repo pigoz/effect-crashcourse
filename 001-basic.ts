@@ -5,8 +5,11 @@ import * as Layer from "@effect/io/Layer";
 import * as Context from "@effect/data/Context";
 
 /*
- * The unique insight of Effect is that errors and requirements/dependencies should be modeled in your program's control flow.
- * This is in contrast to your typical TypeScript code, where a function can either return a "success" value or throw an exception.
+ * The unique insight of Effect is that errors and requirements/dependencies
+ * should be modeled in your program's control flow.
+ *
+ * This is in contrast to your typical TypeScript code, where a function can
+ * either return a "success" value or throw an exception.
  *
  * The data type of Effect looks like the following:
  *
@@ -22,10 +25,12 @@ import * as Context from "@effect/data/Context";
  *  - E is the type of the error in case the computation fails
  *  - A is the return type in case the computation succeeds
  *
- * Think of these as separate channels, all of which you can interact with in your program.
- * R is the requirements channel, E is the failure/error channel, and A is the success channel.
+ * Think of these as separate channels, all of which you can interact within
+ * your program. R is the requirements channel, E is the failure/error channel,
+ * and A is the success channel.
  *
- * R will be covered in more detail later, don't worry if it doesn't make sense yet. Focus on understanding E and A first.
+ * R will be covered in more detail later, don't worry if it doesn't make
+ * sense yet. Focus on understanding E and A first.
  *
  * Effect is inspired by ZIO (a Scala library)
  */
@@ -33,11 +38,18 @@ import * as Context from "@effect/data/Context";
 /*
  * Notes while going through the rest of this crash course:
  * 1. Effect has excellent type inference. You rarely need to specify types manually.
- * 2. There are explicit type annotations in several parts of this crash course to make it easier for you to follow.
+ * 2. There are explicit type annotations in several parts of this crash course
+ * to make it easier for you to follow.
  */
 
-// The point of these functions is to demonstrate a couple basic ways to create an "Effect" value.
-// Notice how the types change based on the function you call.
+/* Basic constructors
+ * ==================
+ *
+ * The point of these functions is to demonstrate a couple basic ways to
+ * create an "Effect" value.
+ *
+ * Notice how the types change based on the function you call.
+ * */
 
 export const s = Effect.succeed(7); // Effect.Effect<never, never, number>
 
@@ -53,7 +65,8 @@ export const sf = Effect.failSync(() => {
   return 4;
 }); // Effect.Effect<never, number, never>
 
-// The following is an example of a computation that can fail. We will look at more error handling in a later chapter.
+// The following is an example of a computation that can fail. We will look at
+// more error handling in a later chapter.
 function eitherFromRandom(random: number): Either.Either<"fail", number> {
   return random > 0.5 ? Either.right(random) : Either.left("fail" as const);
 }
@@ -95,10 +108,12 @@ Effect.runPromise(sometimesFailingEffectAbsolved); // executes y
  *
  * Both are valid alternatives and the choice on which to use comes down to
  * preference. You may have large subsystems which only depend on Option/Either
- * and lift those into Effects later, or use functions that return the Effect data type everywhere for ease of use.
+ * and lift those into Effects later, or use functions that return the Effect
+ * data type everywhere for ease of use.
  */
 
-// Can you figure out what cond does by looking at this example? (Hint: You can also hover over cond to see some info)
+// Can you figure out what cond does by looking at this example?
+// (Hint: You can also hover over cond to see some info)
 function flakyEffectFromRandom(random: number) {
   return Effect.cond(
     () => random > 0.5,
@@ -118,11 +133,12 @@ export const sometimesFailingEffectWithCond = pipe(
  *
  * Up until now we only dealt with Effects that have no dependencies.
  *
- * The R in Effect<R, E, A> has always been never, meaning that that the Effects we've defined
- * don't depend on anything.
+ * The R in Effect<R, E, A> has always been never, meaning that that the
+ * Effects we've defined don't depend on anything.
  *
  * Suppose we want to implement our own custom random generator, and use it in
- * our code as a dependency, similar to how we used the one provided by Effect (the Effect.random() above)
+ * our code as a dependency, similar to how we used the one provided by Effect
+ * (the Effect.random() above)
  */
 export interface CustomRandom {
   readonly next: () => number;
@@ -149,9 +165,11 @@ export const serviceExample = pipe(
 );
 
 /*
- * Notice how R above is now CustomRandom, meaning that our Effect depends on CustomRandom.
+ * Notice how R above is now CustomRandom, meaning that our Effect depends on
+ * CustomRandom.
  *
- * However, we haven't provided an implementation of CustomRandom yet. How do we do that?
+ * However, we haven't provided an implementation of CustomRandom yet.
+ * How do we do that?
  *
  * Running the following:
  *
@@ -166,8 +184,8 @@ export const serviceExample = pipe(
  * Effect has a handful of functions that allow us to provide an implementation.
  * You will see this in more detail in the following sections and chapters.
  *
- * For example, we can use provideService, provideContext, provideLayer, to provide
- * and implementation.
+ * For example, we can use provideService, provideContext, provideLayer, to
+ * provide and implementation.
  *
  * By providing an implementation, we turn the R in Effect<R, E, A> into a
  * `never`, so we end up with a Effect<never, E, A> which we can run.
@@ -207,9 +225,13 @@ export const wl = pipe(serviceExample, Effect.provideLayer(CustomRandomLive));
  * the services you depend on.
  *
  * This can be useful for i.e. mocking:
- * For example, you can use a mocked implementation of CustomRandom in your tests, and a real one in production.
- * You can define these implementations without having to change any of the core logic of your program.
- * Notice how serviceExample doesn't change, but the implementation of CustomRandom can be changed later.
+ *
+ * For example, you can use a mocked implementation of CustomRandom in your
+ * tests, and a real one in production.
+ *
+ * You can define these implementations without having to change any of the
+ * core logic of your program. Notice how serviceExample doesn't change, but
+ * the implementation of CustomRandom can be changed later.
  */
 export const wt = pipe(
   serviceExample,
