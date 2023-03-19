@@ -1,6 +1,6 @@
 ### The practical guide I wish existed while learning [@Effect-TS](https://github.com/Effect-TS/)
 
-This guide explores some of the concepts from the new version of
+This guide explores some concepts from the new version of
 [Effect](https://github.com/Effect-TS/io), and is written from the point of view
 of a casual fp-ts 2 user.
 
@@ -14,7 +14,7 @@ Start reading from [001-basic.ts](001-basic.ts)!
    (e.g. `npm install`)
 2. Any file in this project can be run with the `run-file` script in
    package.json (e.g. `npm run run-file 001-basic.ts` or
-   `yarn run-file 001-basic.ts`). You may also use `tsx` directly if you'd like
+   `yarn run-file 001-basic.ts`). You may also use `tsx` directly
    (`npx tsx 001-basic.ts`).
 
 ### Web-based environment
