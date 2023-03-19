@@ -308,9 +308,9 @@ Cause.empty; // Cause of an Effect that succeeds
 Cause.fail; // Cause of an Effect that errors with fail (failure)
 Cause.die; // Cause of an Effect that errors with die (defect)
 Cause.interrupt; // Cause of an Effect that errors with interrupt
-Cause.annotated; // ?
-Cause.sequential; // ?
-Cause.parallel; // ?
+Cause.annotated; // represents a cause with metadata (for example the stack trace)
+Cause.sequential; // represents two errors that have occurred in sequence
+Cause.parallel; // represents two errors that have occurred in parallel
 
 // And with Cause.match you can match a cause by it's type:
 Cause.match(
@@ -353,7 +353,7 @@ const catchAllCauseLog = Effect.catchAllCause(dieExample, cause =>
 catchAllCauseLog satisfies Effect.Effect<never, never, void>;
 
 /*
- * Effect.runPromise(catchAllCauseLog) will print a backtrace. i.e:
+ * Effect.runPromise(catchAllCauseLog) will print a stack trace. i.e:
  *
  * timestamp=2023-02-14T17:19:17.373Z level=ERROR fiber=#0 message="something went wrong" cause="
  * Error: 💥
