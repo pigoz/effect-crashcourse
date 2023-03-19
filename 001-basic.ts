@@ -30,7 +30,7 @@ import * as Context from "@effect/data/Context";
  * Effect is inspired by ZIO (a Scala library)
  */
 
-/**
+/*
  * Notes while going through the rest of this crash course:
  * 1. Effect has excellent type inference. You rarely need to specify types manually.
  * 2. There are explicit type annotations in several parts of this crash course to make it easier for you to follow.
