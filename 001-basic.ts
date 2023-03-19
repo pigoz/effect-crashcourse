@@ -14,7 +14,7 @@ import * as Context from "@effect/data/Context";
  *
  * The computation has requirements (R), can fail (E) or succeed (A).
  *
- * You can loosely think of Effect<R, E, A> as similar to:
+ * You can loosely think of Effect<R, E, A> as the following type:
  *
  *   (r: R) => Promise<Either<E, A>> | Either<E, A>
  *
@@ -151,7 +151,7 @@ export const serviceExample = pipe(
 /*
  * Notice how R above is now CustomRandom, meaning that our Effect depends on CustomRandom.
  *
- * However, we haven't yet provided an implementation of CustomRandom. How do we do that?
+ * However, we haven't provided an implementation of CustomRandom yet. How do we do that?
  *
  * Running the following:
  *
