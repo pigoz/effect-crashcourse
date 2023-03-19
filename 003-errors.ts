@@ -158,7 +158,7 @@ const catchTagSucceed = Effect.catchTag(example, "FooError", e =>
   Effect.succeed(["recover", e.error] as const),
 );
 
-// Notice how FooError desapeared from the E type, and A now has a union of
+// Notice how FooError disappeared from the E type, and A now has a union of
 // the two possible return types
 catchTagSucceed satisfies Effect.Effect<
   never,

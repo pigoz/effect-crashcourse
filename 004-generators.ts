@@ -69,8 +69,8 @@ export const tuple = pipe(
  * But you would still end up with messy code in real application code, not to
  * mention testing code!
  *
- * To address this issue, Effect has an API that uses generators to flatten
- * the flatmap callback hell.
+ * To address this issue, Effect has an API that uses generators to avoid
+ * callback hell.
  */
 export const generator = Effect.gen(function* ($) {
   const random = yield* $(Effect.service(CustomRandom));
