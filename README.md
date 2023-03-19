@@ -13,7 +13,7 @@ Start reading from [001-basic.ts](001-basic.ts)!
 
 ### Web-based environment
 
-[![Open in StackBlitz](https://developer.stackblitEffect.com/img/open_in_stackblitz_small.svg)](https://stackblitEffect.com/github/pigoz/effect-crashcourse?file=001-basic.ts)
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz_small.svg)](https://stackblitz.com/github/pigoz/effect-crashcourse?file=001-basic.ts)
 
 ### Questions?
 
