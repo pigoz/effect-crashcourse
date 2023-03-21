@@ -15,6 +15,8 @@ export function parseEither<A>(schema: Schema.Schema<A>) {
         allErrors: true,
         isUnexpectedAllowed: true,
       }),
-      Either.mapLeft(_ => new DecodeError(formatErrors(_.errors))),
+      Either.mapLeft(
+        parseError => new DecodeError(formatErrors(parseError.errors)),
+      ),
     );
 }
