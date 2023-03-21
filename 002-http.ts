@@ -1,7 +1,7 @@
 import { pipe } from "@effect/data/Function";
 import * as Effect from "@effect/io/Effect";
 import * as Schema from "@effect/schema/Schema";
-import { decodeEither } from "./utils/decode";
+import { parseEither } from "./utils/decode";
 
 /*
  * The most iconic asynchronous example in JavaScript is fetching from APIs.
@@ -11,20 +11,20 @@ import { decodeEither } from "./utils/decode";
 const id = "97459c0045f373f4eaf126998d8f65dc";
 
 /*
- * Here, we use Effect.tryCatchPromise to wrap a Promise-returning function
+ * Here, we use Effect.attemptCatchPromise to wrap a Promise-returning function
  * into an Effect
  *
  * The first argument is a promise returning function, the second is a function
  * that handles the potential exception
  */
 const fetchGist = (id: string) =>
-  Effect.tryCatchPromise(
+  Effect.attemptCatchPromise(
     () => fetch(`https://api.github.com/gists/${id}`),
     () => "fetch" as const,
   ); // Effect.Effect<never, "fetch", Response>
 
 const getJson = (res: Response) =>
-  Effect.tryCatchPromise(
+  Effect.attemptCatchPromise(
     () => res.json() as Promise<unknown>, // Promise<any> otherwise
     () => "json" as const,
   ); // Effect.Effect<never, "json", unknown>
@@ -47,6 +47,7 @@ const GistSchema = Schema.struct({
   ),
 });
 
+// Can get the typescript type from the schema
 interface Gist extends Schema.To<typeof GistSchema> {}
 
 const program = pipe(
@@ -57,7 +58,7 @@ const program = pipe(
   Effect.flatMap(getJson),
 
   // Effect.Effect<never, 'fetch' | 'json', Either<DecodeError, Gist>>
-  Effect.map(decodeEither<Gist>(GistSchema)),
+  Effect.map(parseEither(GistSchema)),
 
   // Effect.Effect<never, 'fetch' | 'json' | DecodeError, Gist>
   Effect.flatMap(Effect.fromEither),

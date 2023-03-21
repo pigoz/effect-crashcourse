@@ -73,7 +73,7 @@ export const FooError = Data.tagged<FooError>("FooError");
 // Data.TaggedClass
 export class FooErrorClass extends Data.TaggedClass("FooError")<{
   readonly error: string;
-}>() {}
+}> {}
 
 // plain Typescript classes
 export class BarError {
