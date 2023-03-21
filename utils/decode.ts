@@ -1,4 +1,3 @@
-import * as Effect from "@effect/io/Effect";
 import * as Schema from "@effect/schema/Schema";
 import * as Either from "@effect/data/Either";
 import { pipe } from "@effect/data/Function";
@@ -9,18 +8,13 @@ export class DecodeError {
   constructor(readonly error: string) {}
 }
 
-export function decodeEither<A>(schema: Schema.Schema<A>) {
+export function parseEither<A>(schema: Schema.Schema<A>) {
   return (input: unknown) =>
     pipe(
-      Schema.decodeEither(schema)(input, {
+      Schema.parseEither(schema)(input, {
         allErrors: true,
         isUnexpectedAllowed: true,
       }),
-      Either.mapLeft(_ => new DecodeError(formatErrors(_))),
+      Either.mapLeft(_ => new DecodeError(formatErrors(_.errors))),
     );
-}
-
-export function decodeAbsolve<A>(schema: Schema.Schema<A>) {
-  return (input: unknown) =>
-    Effect.absolve(Effect.sync(() => decodeEither(schema)(input)));
 }
