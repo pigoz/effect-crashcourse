@@ -14,8 +14,10 @@ const id = "97459c0045f373f4eaf126998d8f65dc";
  * Here, we use Effect.attemptCatchPromise to wrap a Promise-returning function
  * into an Effect
  *
- * The first argument is a promise returning function, the second is a function
- * that handles the potential exception
+ * The first argument is a callback that returns the Promise to wrap.
+ *
+ * The second is a callback that returns a value to put in the error channel
+ * (E in Effect<R, E, A>) in case the Promise throws an exception.
  */
 const fetchGist = (id: string) =>
   Effect.attemptCatchPromise(
@@ -30,8 +32,9 @@ const getJson = (res: Response) =>
   ); // Effect.Effect<never, "json", unknown>
 
 /*
- * Schema is a library in the Effect ecosystem that allows you to define a
- * type-safe schema for your data
+ * Schema is a library in the Effect ecosystem that allows you to parse and
+ * encode data in a type-safe way.
+ *
  * It may look familiar if you have used libraries like io-ts or zod
  */
 const GistSchema = Schema.struct({
@@ -48,7 +51,7 @@ const GistSchema = Schema.struct({
 });
 
 // Can get the typescript type from the schema
-interface Gist extends Schema.To<typeof GistSchema> {}
+export interface Gist extends Schema.To<typeof GistSchema> {}
 
 const program = pipe(
   // Effect.Effect<never, 'fetch', Response>
