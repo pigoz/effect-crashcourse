@@ -53,7 +53,7 @@ const GistSchema = Schema.struct({
 // Can get the typescript type from the schema
 export interface Gist extends Schema.To<typeof GistSchema> {}
 
-const program = pipe(
+const getAndParseGist = pipe(
   // Effect.Effect<never, 'fetch', Response>
   fetchGist(id),
 
@@ -67,6 +67,50 @@ const program = pipe(
   Effect.flatMap(Effect.fromEither),
 );
 
-Effect.runPromise(program)
+Effect.runPromise(getAndParseGist)
   .then(x => console.log("decoded gist %o", x))
   .catch(err => console.error(err));
+
+// The second main type of code you can find in the wild is callback based
+import * as fs from "node:fs";
+
+/*
+ * Here we wrap the readFile function provided by Node, using Effect.async.
+ *
+ * Effect.async provides us with a resume function that we can call passing a
+ * succeeding effect or a failure in order to resume the suspended computation.
+ *
+ * It's similar to a Promise's resolve function, but with an explicit error value.
+ */
+export const readFileEffect = (path: fs.PathOrFileDescriptor) =>
+  Effect.async<never, NodeJS.ErrnoException, Buffer>(resume =>
+    fs.readFile(path, (error, data) => {
+      if (error) {
+        resume(Effect.fail(error));
+      } else {
+        resume(Effect.succeed(data));
+      }
+    }),
+  );
+
+/*
+ * asyncInterrupt works similarly, but also allows to handle interruptions.
+ *
+ * If the Fiber running the readFileEffectInterrupt gets interrupted,
+ * controller.abort() will be called, resulting in the underlying fs.readFile
+ * being interrupted too.
+ */
+export const readFileEffectInterrupt = (path: fs.PathOrFileDescriptor) =>
+  Effect.asyncInterrupt<never, NodeJS.ErrnoException, Buffer>(resume => {
+    const controller = new AbortController();
+
+    fs.readFile(path, { signal: controller.signal }, (error, data) => {
+      if (error) {
+        resume(Effect.fail(error));
+      } else {
+        resume(Effect.succeed(data));
+      }
+    });
+
+    return Effect.sync(() => controller.abort());
+  });
