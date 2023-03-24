@@ -51,44 +51,84 @@ import * as Context from "@effect/data/Context";
  * Notice how the types change based on the function you call.
  * */
 
-export const s = Effect.succeed(7); // Effect.Effect<never, never, number>
+/*
+ * succeed creates an Effect value that includes it's argument in the
+ * success channel (A in Effect<R, E, A>)
+ */
+export const succeed = Effect.succeed(7);
+//           ^ Effect.Effect<never, never, number>;
 
-export const f = Effect.fail(3); // Effect.Effect<never, number, never>
+/*
+ * fail creates an Effect value that includes it's argument in the
+ * failure channel (E in Effect<R, E, A>)
+ */
+export const fail = Effect.fail(3);
+//           ^ Effect.Effect<never, number, never>;
 
-export const ss = Effect.sync(() => {
-  console.log("hello from Effect.sync");
-  return 4;
-}); // Effect.Effect<never, never, number>
+/*
+ * sync can be thought as a lazy alternative to succeed.
+ * A is built lazily only when the Effect is run.
+ */
+export const sync = Effect.sync(() => new Date());
+//           ^ Effect.Effect<never, number, Date>;
 
-export const sf = Effect.failSync(() => {
-  console.log("hello from Effect.failSync");
-  return 4;
-}); // Effect.Effect<never, number, never>
+/*
+ * NOTE: if we used Effect.succeed(new Date()), the date stored in the success
+ * channel would be the one when the javascript virtual machine initially
+ * loads and executes our code.
+ *
+ * For values that do not change like a number, it doesn't make any difference.
+ */
 
-// The following is an example of a computation that can fail. We will look at
-// more error handling in a later chapter.
+/*
+ * failSync can be thought as a lazy alternative to fail.
+ * E is built lazily only when the Effect is run.
+ */
+export const failSync = Effect.failSync(() => new Date());
+//           ^ Effect.Effect<never, Date, never>;
+
+/* suspend allows to lazily build an Effect value.
+ *
+ * While sync builds A lazily, and failSync builds E lazily, suspend builds
+ * the whole Effect<R, E, A> lazily!
+ */
+export const suspend =
+  //         ^ Effect.Effect<never, '<.5', Date>;
+  Effect.suspend(() =>
+    Math.random() > 0.5
+      ? Effect.succeed(new Date())
+      : Effect.fail("<.5" as const),
+  );
+
+/*
+ * Some basic control flow
+ * =======================
+ *
+ * The following is an example of a computation that can fail. We will look at
+ * more error handling in a later chapter.
+ */
 function eitherFromRandom(random: number): Either.Either<"fail", number> {
   return random > 0.5 ? Either.right(random) : Either.left("fail" as const);
 }
 
 // This will fail sometimes
-export const sometimesFailingEffect = pipe(
+export const flakyEffect = pipe(
   Effect.sync(() => Math.random()), // Effect.Effect<never, never, number>
   Effect.map(eitherFromRandom), // Effect.Effect<never, never, Either<'fail', number>>
   Effect.flatMap(Effect.fromEither), // Effect.Effect<never, 'fail', number>
 );
 
 // Same thing but using the number generator provided by Effect
-/* NOTE:
- * Effect.flatMap(Effect.fromEither) is so common that there's a built in function
- * that's equivalent to it: Effect.absolve
- */
-export const sometimesFailingEffectAbsolved = pipe(
+export const flakyEffectAbsolved = pipe(
   Effect.random(), // Effect.Effect<never, never, Random>
   Effect.flatMap(random => random.next()), // Effect.Effect<never, never, number>
   Effect.map(eitherFromRandom), // Effect.Effect<never, never, Either<'fail', number>>
   Effect.absolve, // Effect.Effect<never, 'fail', number>
 );
+/* NOTE:
+ * Effect.flatMap(Effect.fromEither) is so common that there's a built in function
+ * that's equivalent to it: Effect.absolve.
+ */
 
 /* Up to this point we only constructed Effect values, none of the computations
  * that we defined have been executed. Effects are just objects that
@@ -100,7 +140,7 @@ export const sometimesFailingEffectAbsolved = pipe(
  * Think of it as defining a workflow, and then running it only when you are ready.
  */
 
-Effect.runPromise(sometimesFailingEffectAbsolved); // executes y
+Effect.runPromise(flakyEffectAbsolved); // executes flakyEffectAbsolved
 
 /* As an alternative, instead of using eitherFromRandom and dealing with an
  * Either that we later lift into an Effect, we can write that conditional
@@ -122,14 +162,14 @@ function flakyEffectFromRandom(random: number) {
   );
 }
 
-export const sometimesFailingEffectWithCond = pipe(
+export const flakyEffectNative = pipe(
   Effect.random(), // Effect.Effect<never, never, Random>
   Effect.flatMap(random => random.next()), // Effect.Effect<never, never, number>
   Effect.flatMap(flakyEffectFromRandom), // Effect.Effect<never, 'fail', number>
 );
 
-/* ###########################################################################
- * Context
+/* Context
+ * =======
  *
  * Up until now we only dealt with Effects that have no dependencies.
  *
@@ -144,6 +184,8 @@ export interface CustomRandom {
   readonly next: () => number;
 }
 
+export const CustomRandom = Context.Tag<CustomRandom>();
+
 /* To provide us with dependency injection features, Effect uses a data
  * structure called Context. It is a table mapping Tags to their
  * implementation (called Service).
@@ -153,10 +195,13 @@ export interface CustomRandom {
  * In our program we can say that we depend on the implementation of
  * CustomRandom (a tag) by calling Effect.service(CustomRandom).
  *
+ * Effect.service pulls CustomRandom from the requirements channel (R) and
+ * puts it in the success channel (A). This is reflected in it's type:
+ * Effect.Effect<CustomRandom, never, CustomRandom>
+ *
  * Here, CustomRandom is an interface, and we can later provide an implementation.
  * You will see why this is really powerful later on.
  */
-export const CustomRandom = Context.Tag<CustomRandom>();
 
 export const serviceExample = pipe(
   Effect.service(CustomRandom), // Effect.Effect<CustomRandom, never, CustomRandom>
@@ -173,7 +218,7 @@ export const serviceExample = pipe(
  *
  * Running the following:
  *
- * Effect.runPromise(w);
+ * Effect.runPromise(serviceExample);
  *
  * Would lead to the following type error:
  *
@@ -182,7 +227,6 @@ export const serviceExample = pipe(
  * Type 'CustomRandom' is not assignable to type 'never'.
  *
  * Effect has a handful of functions that allow us to provide an implementation.
- * You will see this in more detail in the following sections and chapters.
  *
  * For example, we can use provideService, provideContext, provideLayer, to
  * provide and implementation.
@@ -218,7 +262,10 @@ export const CustomRandomLive = Layer.succeed(CustomRandom, {
   next: Math.random,
 });
 
-export const wl = pipe(serviceExample, Effect.provideLayer(CustomRandomLive));
+export const liveProgram = pipe(
+  serviceExample,
+  Effect.provideLayer(CustomRandomLive),
+);
 
 /*
  * The powerful part of Effect is you can have multiple implementations for
@@ -233,7 +280,7 @@ export const wl = pipe(serviceExample, Effect.provideLayer(CustomRandomLive));
  * core logic of your program. Notice how serviceExample doesn't change, but
  * the implementation of CustomRandom can be changed later.
  */
-export const wt = pipe(
+export const testProgram = pipe(
   serviceExample,
   Effect.provideService(CustomRandom, { next: () => 0.3 }),
 );
