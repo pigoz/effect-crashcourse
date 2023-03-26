@@ -70,7 +70,7 @@ export const fail = Effect.fail(3);
  * A is built lazily only when the Effect is run.
  */
 export const sync = Effect.sync(() => new Date());
-//           ^ Effect.Effect<never, number, Date>;
+//           ^ Effect.Effect<never, never, Date>;
 
 /*
  * NOTE: if we used Effect.succeed(new Date()), the date stored in the success
