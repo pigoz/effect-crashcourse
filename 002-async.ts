@@ -94,13 +94,16 @@ export const readFileEffect = (path: fs.PathOrFileDescriptor) =>
   );
 
 /*
- * asyncInterrupt works similarly, but also allows to handle interruptions.
+ * asyncInterrupt works similarly, but also allows to handle interruptions
+ * (we will explore what interruptions are in future chapters)
  *
- * If the Fiber running the readFileEffectInterrupt gets interrupted,
- * controller.abort() will be called, resulting in the underlying fs.readFile
- * being interrupted too.
+ * If the Effect returned from readFileEffectInterrupt gets interrupted by
+ * the runtime controller.abort() will be called, resulting in the underlying
+ * fs.readFile being interrupted too.
  */
 export const readFileEffectInterrupt = (path: fs.PathOrFileDescriptor) =>
+  // NOTE: this one of the few occasions where Effect needs us to pass in the
+  // correct generics, otherwise types don't get inferred properly.
   Effect.asyncInterrupt<never, NodeJS.ErrnoException, Buffer>(resume => {
     const controller = new AbortController();
 
