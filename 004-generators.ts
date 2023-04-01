@@ -80,7 +80,7 @@ export const tuple2 = pipe(
  * callback hell.
  */
 export const generator = Effect.gen(function* ($) {
-  /* Unfortunately Effects must be wrapped in this $ function because of
+  /* NOTE: Unfortunately Effects must be wrapped in this $ function because of
    * shortcomings in the TypeScript language. Someday the TypeScript team might
    * improve how typings in generators work and Effect could drop this $ as a
    * result.
@@ -100,8 +100,8 @@ export const generatorerr = Effect.gen(function* ($) {
   const foo = yield* $(Foo);
   const bar = yield* $(Bar);
 
-  /* The cool part is at least $ can also be used as a pipe so we can shorten
-   * stuff like $(pipe(var, Effect.map(...))) into $(var, Effect.map(...))
+  /* NOTE: The cool part is at least $ can also be used as a pipe so we can
+   * shorten $(pipe(var, Effect.map(...))) into $(var, Effect.map(...))
    */
   const random = yield* $(
     CustomRandom,
