@@ -4,7 +4,7 @@ import * as Data from "@effect/data/Data";
 import * as Match from "@effect/match";
 import * as Option from "@effect/data/Option";
 import * as Either from "@effect/data/Either";
-import { identity, pipe } from "@effect/data/Function";
+import { pipe } from "@effect/data/Function";
 
 /*
  * Effect has 3 main types of errors:
@@ -397,14 +397,13 @@ successful satisfies Effect.Effect<never, never, "recovered">;
 
 /* Failure to Defect
  *
- * Effect.refine* functions allow to convert failures into defects.
+ * Effect.refine* functions allow to convert all failures except some into
+ * defects.
  */
 
-const refineTagOrDie1 = Effect.refineOrDie(example, failure =>
-  pipe(Match.value(failure), Match.tag("FooError", identity), Match.option),
-);
+const refineTagOrDie = Effect.refineTagOrDie(example, "FooError");
 
-refineTagOrDie1 satisfies Effect.Effect<
+refineTagOrDie satisfies Effect.Effect<
   never,
   FooError,
   readonly ["success1", "success2"]

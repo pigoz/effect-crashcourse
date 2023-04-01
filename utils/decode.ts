@@ -11,10 +11,7 @@ export class DecodeError {
 export function parseEither<A>(schema: Schema.Schema<A>) {
   return (input: unknown) =>
     pipe(
-      Schema.parseEither(schema)(input, {
-        allErrors: true,
-        isUnexpectedAllowed: true,
-      }),
+      Schema.parseEither(schema)(input, { errors: "all" }),
       Either.mapLeft(
         parseError => new DecodeError(formatErrors(parseError.errors)),
       ),

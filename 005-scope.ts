@@ -88,7 +88,7 @@ export const useFileDescriptorStupid: useFileDescriptor = Effect.gen(function* (
   $,
 ) {
   const scope = yield* $(Scope.make());
-  const fd = yield* $(pipe(resource, Effect.provideService(Scope.Tag, scope)));
+  const fd = yield* $(Effect.provideService(resource, Scope.Scope, scope));
   yield* $(Effect.logInfo(`useFileDescriptorStupid ${fd}`));
   yield* $(Scope.close(scope, Exit.unit()));
 });
@@ -109,7 +109,7 @@ export const useFileDescriptorSmarter: useFileDescriptor =
       pipe(
         resource,
         Effect.tap(_ => Effect.logInfo(`useFileDescriptorSmarter ${_.fd}`)),
-        Effect.provideService(Scope.Tag, scope),
+        Effect.provideService(Scope.Scope, scope),
       ),
     scope => Scope.close(scope, Exit.unit()),
   );

@@ -28,13 +28,13 @@ export const Bar = Context.Tag<Bar>();
  * dependency in your code, you end up using flatMap and the indentation grows.
  */
 export const hell = pipe(
-  Effect.service(CustomRandom),
+  CustomRandom,
   Effect.flatMap(random =>
     pipe(
-      Effect.service(Foo),
+      Foo,
       Effect.flatMap(foo =>
         pipe(
-          Effect.service(Bar),
+          Bar,
           Effect.flatMap(bar =>
             Effect.sync(() => {
               console.log("please stop!!!", random.next(), foo.foo, bar.bar);
@@ -52,11 +52,7 @@ export const hell = pipe(
  * API using the "all" function built in into Effect.
  */
 export const tuple = pipe(
-  Effect.all(
-    Effect.service(CustomRandom),
-    Effect.service(Foo),
-    Effect.service(Bar),
-  ),
+  Effect.all(CustomRandom, Foo, Bar),
   Effect.flatMap(([random, foo, bar]) =>
     Effect.sync(() => {
       console.log("not as bad!", random.next(), foo.foo, bar.bar);
@@ -73,9 +69,14 @@ export const tuple = pipe(
  * callback hell.
  */
 export const generator = Effect.gen(function* ($) {
-  const random = yield* $(Effect.service(CustomRandom));
-  const foo = yield* $(Effect.service(Foo));
-  const bar = yield* $(Effect.service(Bar));
+  /* Unfortunately Effects must be wrapped in this $ function because of
+   * shortcomings in the TypeScript language. Someday the TypeScript team might
+   * improve how typings in generators work and Effect could drop this $ as a
+   * result.
+   */
+  const random = yield* $(CustomRandom);
+  const foo = yield* $(Foo);
+  const bar = yield* $(Bar);
 
   console.log("this is pretty cool!", random.next(), foo.foo, bar.bar);
   return "generator" as const;
@@ -85,16 +86,23 @@ export const generator = Effect.gen(function* ($) {
  * Just yield a failing Effect
  */
 export const generatorerr = Effect.gen(function* ($) {
-  const random = yield* $(Effect.service(CustomRandom));
-  const foo = yield* $(Effect.service(Foo));
-  const bar = yield* $(Effect.service(Bar));
+  const foo = yield* $(Foo);
+  const bar = yield* $(Bar);
 
-  if (random.next() > 0.5) {
+  /* The cool part is at least $ can also be used as a pipe so we can shorten
+   * stuff like $(pipe(var, Effect.map(...))) into $(var, Effect.map(...))
+   */
+  const random = yield* $(
+    CustomRandom,
+    Effect.map(random => random.next()),
+  );
+
+  if (random > 0.5) {
     // Whenever this code block is reached, it will exact this generator
     yield* $(Effect.fail("bad random" as const));
   }
 
-  console.log("this is pretty cool!", random.next(), foo.foo, bar.bar);
+  console.log("this is pretty cool!", random, foo.foo, bar.bar);
   return "generator" as const;
 });
 
@@ -108,9 +116,9 @@ export const generatorerr = Effect.gen(function* ($) {
  */
 export const doNotation = pipe(
   Effect.Do(),
-  Effect.bind("random", () => Effect.service(CustomRandom)),
-  Effect.bind("foo", () => Effect.service(Foo)),
-  Effect.bind("bar", () => Effect.service(Bar)),
+  Effect.bind("random", () => CustomRandom),
+  Effect.bind("foo", () => Foo),
+  Effect.bind("bar", () => Bar),
   Effect.flatMap(({ random, foo, bar }) =>
     Effect.sync(() =>
       console.log("this is pretty cool!", random.next(), foo.foo, bar.bar),

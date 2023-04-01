@@ -21,13 +21,13 @@ import { Foo, Bar, FileDescriptor } from "utils/contexts";
  * Everything should look familiar to the previous chapters.
  */
 const program1 = Effect.gen(function* ($) {
-  const foo = yield* $(Effect.service(Foo));
+  const foo = yield* $(Foo);
   yield* $(Effect.logInfo(`program1 ${JSON.stringify(foo)}`));
 });
 
 const program2 = Effect.gen(function* ($) {
-  const baz = yield* $(Effect.service(FileDescriptor));
-  const bar = yield* $(Effect.service(Bar));
+  const baz = yield* $(FileDescriptor);
+  const bar = yield* $(Bar);
   yield* $(
     Effect.logInfo(`program2 ${JSON.stringify(bar)} ${JSON.stringify(baz)}`),
   );

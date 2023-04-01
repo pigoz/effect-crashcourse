@@ -192,31 +192,32 @@ export const CustomRandom = Context.Tag<CustomRandom>();
  *
  * Think of it as the following type: Map<Tag, Service>.
  *
- * In our program we can say that we depend on the implementation of
- * CustomRandom (a tag) by calling Effect.service(CustomRandom).
+ * An interesting property of Tag is it is a subtype of Effect, so you can for
+ * example map and flatMap over it to get to the service.
  *
- * Effect.service pulls CustomRandom from the requirements channel (R) and
- * puts it in the success channel (A). This is reflected in it's type:
- * Effect.Effect<CustomRandom, never, CustomRandom>
+ * In our case we can do something like:
  *
- * Here, CustomRandom is an interface, and we can later provide an implementation.
- * You will see why this is really powerful later on.
+ *    Effect.map(CustomRandom, (service) => ...)
+ *
+ * Doing so will introduce a dependency on CustomRandom in our code.
+ * That will be reflected in the Effect<R, E, A> datatype, where the
+ * requirements channel (R) will become of type CustomRandom.
  */
 
 export const serviceExample = pipe(
-  Effect.service(CustomRandom), // Effect.Effect<CustomRandom, never, CustomRandom>
+  CustomRandom, // Context.Tag<CustomRandom, CustomRandom>
   Effect.map(random => random.next()), // Effect.Effect<CustomRandom, never, number>
   Effect.flatMap(flakyEffectFromRandom), // Effect.Effect<CustomRandom, 'fail', number>
 );
 
 /*
- * Notice how R above is now CustomRandom, meaning that our Effect depends on
- * CustomRandom.
+ * Notice how R above is now CustomRandom, meaning that our Effect depends on it.
+ * However CustomRandom is just an interface and we haven't provided an
+ * implementation for it... yet.
  *
- * However, we haven't provided an implementation of CustomRandom yet.
- * How do we do that?
+ * How to do that?
  *
- * Running the following:
+ * Taking a step back and trying to compile the following:
  *
  * Effect.runPromise(serviceExample);
  *
@@ -226,13 +227,17 @@ export const serviceExample = pipe(
  * to parameter of type 'Effect<never, "fail", number>'.
  * Type 'CustomRandom' is not assignable to type 'never'.
  *
+ * To run an Effect we need it to have no missing dependencies, in other
+ * words R must be never.
+ *
+ * By providing an implementation, we turn the R in Effect<R, E, A> into a
+ * `never`, so we end up with a Effect<never, E, A> which we can run.
+ *
  * Effect has a handful of functions that allow us to provide an implementation.
  *
  * For example, we can use provideService, provideContext, provideLayer, to
  * provide and implementation.
  *
- * By providing an implementation, we turn the R in Effect<R, E, A> into a
- * `never`, so we end up with a Effect<never, E, A> which we can run.
  */
 
 // Providing an implementation with provideService
