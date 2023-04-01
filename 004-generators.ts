@@ -61,6 +61,17 @@ export const tuple = pipe(
   ),
 );
 
+// Effect.all preserves the shape of it's argument
+export const tuple2 = pipe(
+  Effect.all({ random: CustomRandom, foo: Foo, bar: Bar }),
+  Effect.flatMap(({ random, foo, bar }) =>
+    Effect.sync(() => {
+      console.log("not as bad!", random.next(), foo.foo, bar.bar);
+      return "tuple" as const;
+    }),
+  ),
+);
+
 /*
  * But you would still end up with messy code in real application code, not to
  * mention testing code!
