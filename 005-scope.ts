@@ -84,12 +84,12 @@ export const resource: Effect.Effect<Scope.Scope, never, FileDescriptor> =
  */
 type useFileDescriptor = Effect.Effect<never, never, void>;
 
-export const useFileDescriptorStupid: useFileDescriptor = Effect.gen(function* (
+export const useFileDescriptorNaive: useFileDescriptor = Effect.gen(function* (
   $,
 ) {
   const scope = yield* $(Scope.make());
   const fd = yield* $(Effect.provideService(resource, Scope.Scope, scope));
-  yield* $(Effect.logInfo(`useFileDescriptorStupid ${fd}`));
+  yield* $(Effect.logInfo(`useFileDescriptorNaive ${fd}`));
   yield* $(Scope.close(scope, Exit.unit()));
 });
 
@@ -173,7 +173,7 @@ export const myAcquireUseRelease = <R, E, A, R2, E2, A2, R3, X>(
 
 /*
  *
- * For our stupid example, the following would have been perfectly fine, and
+ * For our naive example, the following would have been perfectly fine, and
  * it would be fine to handle access to resources that aren't application wide
  * and meant to be reused.
  */
@@ -185,8 +185,9 @@ export const writeSomethingToDevNull = (something: string) =>
   );
 
 /*
- * But the point of Layers is to define application wide resources.
+ * We will see in the next chapter how to use Layer and Runtime to define
+ * application wide resources.
  *
- * The "use" effect is your whole application, thus inversion of control is
- * not possible and you have to use acquireRelease and Scope.
+ * In that case the "use" effect is your whole application, thus inversion of
+ * control is not possible and you have to use acquireRelease and Scope.
  */

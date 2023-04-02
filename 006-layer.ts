@@ -33,9 +33,18 @@ const program2 = Effect.gen(function* ($) {
   );
 });
 
-// These are stupid Layers with no lifetime
+// These are simple Layers with no lifetime
 const FooLive = Layer.succeed(Foo, { foo: 4 });
-const BarLive = Layer.succeed(Bar, { bar: 2 });
+
+// You can even build a layer from an effect
+const BarLive = Layer.effect(
+  Bar,
+  pipe(
+    Effect.random(),
+    Effect.flatMap(random => random.next()),
+    Effect.map(bar => ({ bar })),
+  ),
+);
 
 // This is the exact same "scoped effect" we defined in 004-scope to manage a
 // FileDescriptor lifetime!
