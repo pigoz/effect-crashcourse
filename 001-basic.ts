@@ -184,7 +184,7 @@ export interface CustomRandom {
   readonly next: () => number;
 }
 
-export const CustomRandom = Context.Tag<CustomRandom>();
+export const CustomRandomTag = Context.Tag<CustomRandom>();
 
 /* To provide us with dependency injection features, Effect uses a data
  * structure called Context. It is a table mapping Tags to their
@@ -205,7 +205,7 @@ export const CustomRandom = Context.Tag<CustomRandom>();
  */
 
 export const serviceExample = pipe(
-  CustomRandom, // Context.Tag<CustomRandom, CustomRandom>
+  CustomRandomTag, // Context.Tag<CustomRandom, CustomRandom>
   Effect.map(random => random.next()), // Effect.Effect<CustomRandom, never, number>
   Effect.flatMap(flakyEffectFromRandom), // Effect.Effect<CustomRandom, 'fail', number>
 );
@@ -244,15 +244,15 @@ export const serviceExample = pipe(
 // (handy for Effects that depend on a single service)
 export const provideServiceExample = pipe(
   serviceExample,
-  Effect.provideService(CustomRandom, { next: Math.random }),
+  Effect.provideService(CustomRandomTag, { next: Math.random }),
 );
 
 // Providing an implementation with provideContext
 // (handy for Effects that depend on multiple services)
 const context = pipe(
   Context.empty(),
-  Context.add(CustomRandom, { next: Math.random }),
-  // Context.add(Foo)({ foo: 'foo' })
+  Context.add(CustomRandomTag, { next: Math.random }),
+  // Context.add(FooTag)({ foo: 'foo' })
 );
 
 export const provideContextExample = pipe(
@@ -263,13 +263,15 @@ export const provideContextExample = pipe(
 // Providing an implementation with layers
 // (handy for real world systems with complex dependency trees)
 // (will go more in depth about layers in a future guide)
-export const CustomRandomLive = Layer.succeed(CustomRandom, {
+export const CustomRandomServiceLive = () => ({
   next: Math.random,
 });
 
 export const liveProgram = pipe(
   serviceExample,
-  Effect.provideLayer(CustomRandomLive),
+  Effect.provideLayer(
+    Layer.succeed(CustomRandomTag, CustomRandomServiceLive()),
+  ),
 );
 
 /*
@@ -285,7 +287,11 @@ export const liveProgram = pipe(
  * core logic of your program. Notice how serviceExample doesn't change, but
  * the implementation of CustomRandom can be changed later.
  */
+export const CustomRandomServiceTest = () => ({
+  next: () => 0.3,
+});
+
 export const testProgram = pipe(
   serviceExample,
-  Effect.provideService(CustomRandom, { next: () => 0.3 }),
+  Effect.provideService(CustomRandomTag, CustomRandomServiceTest()),
 );

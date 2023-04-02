@@ -9,32 +9,32 @@ import * as Context from "@effect/data/Context";
  * high quality codebases.
  */
 
-import { CustomRandom } from "001-basic";
+import { CustomRandomTag } from "001-basic";
 
 export interface Foo {
   readonly foo: number;
 }
 
-export const Foo = Context.Tag<Foo>();
+export const FooTag = Context.Tag<Foo>();
 
 export interface Bar {
   readonly bar: number;
 }
 
-export const Bar = Context.Tag<Bar>();
+export const BarTag = Context.Tag<Bar>();
 
 /*
  * Effect would be very similar - the main issue is any time you have a new
  * dependency in your code, you end up using flatMap and the indentation grows.
  */
 export const hell = pipe(
-  CustomRandom,
+  CustomRandomTag,
   Effect.flatMap(random =>
     pipe(
-      Foo,
+      FooTag,
       Effect.flatMap(foo =>
         pipe(
-          Bar,
+          BarTag,
           Effect.flatMap(bar =>
             Effect.sync(() => {
               console.log("please stop!!!", random.next(), foo.foo, bar.bar);
@@ -52,7 +52,7 @@ export const hell = pipe(
  * API using the "all" function built in into Effect.
  */
 export const tuple = pipe(
-  Effect.all(CustomRandom, Foo, Bar),
+  Effect.all(CustomRandomTag, FooTag, BarTag),
   Effect.flatMap(([random, foo, bar]) =>
     Effect.sync(() => {
       console.log("not as bad!", random.next(), foo.foo, bar.bar);
@@ -63,7 +63,7 @@ export const tuple = pipe(
 
 // Effect.all preserves the shape of it's argument
 export const tuple2 = pipe(
-  Effect.all({ random: CustomRandom, foo: Foo, bar: Bar }),
+  Effect.all({ random: CustomRandomTag, foo: FooTag, bar: BarTag }),
   Effect.flatMap(({ random, foo, bar }) =>
     Effect.sync(() => {
       console.log("not as bad!", random.next(), foo.foo, bar.bar);
@@ -85,9 +85,9 @@ export const generator = Effect.gen(function* ($) {
    * improve how typings in generators work and Effect could drop this $ as a
    * result.
    */
-  const random = yield* $(CustomRandom);
-  const foo = yield* $(Foo);
-  const bar = yield* $(Bar);
+  const random = yield* $(CustomRandomTag);
+  const foo = yield* $(FooTag);
+  const bar = yield* $(BarTag);
 
   console.log("this is pretty cool!", random.next(), foo.foo, bar.bar);
   return "generator" as const;
@@ -97,14 +97,14 @@ export const generator = Effect.gen(function* ($) {
  * Just yield a failing Effect
  */
 export const generatorerr = Effect.gen(function* ($) {
-  const foo = yield* $(Foo);
-  const bar = yield* $(Bar);
+  const foo = yield* $(FooTag);
+  const bar = yield* $(BarTag);
 
   /* NOTE: The cool part is at least $ can also be used as a pipe so we can
    * shorten $(pipe(var, Effect.map(...))) into $(var, Effect.map(...))
    */
   const random = yield* $(
-    CustomRandom,
+    CustomRandomTag,
     Effect.map(random => random.next()),
   );
 
@@ -127,9 +127,9 @@ export const generatorerr = Effect.gen(function* ($) {
  */
 export const doNotation = pipe(
   Effect.Do(),
-  Effect.bind("random", () => CustomRandom),
-  Effect.bind("foo", () => Foo),
-  Effect.bind("bar", () => Bar),
+  Effect.bind("random", () => CustomRandomTag),
+  Effect.bind("foo", () => FooTag),
+  Effect.bind("bar", () => BarTag),
   Effect.flatMap(({ random, foo, bar }) =>
     Effect.sync(() =>
       console.log("this is pretty cool!", random.next(), foo.foo, bar.bar),
