@@ -8,7 +8,7 @@ export class DecodeError {
   constructor(readonly error: string) {}
 }
 
-export function parseEither<A>(schema: Schema.Schema<A>) {
+export function parseEither<_, A>(schema: Schema.Schema<_, A>) {
   return (input: unknown) =>
     pipe(
       Schema.parseEither(schema)(input, { errors: "all" }),
