@@ -58,11 +58,14 @@ import { pipe } from "@effect/data/Function";
  *
  * To define such errors you can use:
  *  - interface extending Data.Case in combination with Data.tagged
- *  - Data.TaggedClass (most concise option using Data)
+ *  - plain Typescript interfaces
+ *
+ *  - Data.TaggedClass
  *  - plain Typescript classes
  */
 
-// interface extending Data.Case in combination with Data.tagged
+// interface extending Data.Case in combination with Data.TaggedClass
+// NOTE: this is the most convenient option if you want to use interfaces
 export interface FooError extends Data.Case {
   readonly _tag: "FooError";
   readonly error: string;
@@ -70,7 +73,20 @@ export interface FooError extends Data.Case {
 
 export const FooError = Data.tagged<FooError>("FooError");
 
+// plain Typescript interfaces with corresponding constructor
+// NOTE: this is the minimalist option if you want to use interfaces
+export interface BatError {
+  readonly _tag: "BatError";
+  readonly error: unknown;
+}
+
+export const BatError = (error: unknown): BatError => ({
+  _tag: "BatError",
+  error,
+});
+
 // Data.TaggedClass
+// most concise option using classes
 export class FooErrorClass extends Data.TaggedClass("FooError")<{
   readonly error: string;
 }> {}
@@ -87,6 +103,10 @@ export class BazError {
 }
 
 /*
+ * The nice thing about using classes is you can define the type and
+ * constructor in one go. But many people dislike them, so it's your choice
+ * which option to use.
+ *
  * Errors defined through Data have the added benefit of providing an Equal
  * implementation. That allows to compare errors by value instead of reference.
  */
