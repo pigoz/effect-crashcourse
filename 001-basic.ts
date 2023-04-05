@@ -147,9 +147,15 @@ Effect.runPromise(flakyEffectAbsolved); // executes flakyEffectAbsolved
  * Effect directly.
  *
  * Both are valid alternatives and the choice on which to use comes down to
- * preference. You may have large subsystems which only depend on Option/Either
- * and lift those into Effects later, or use functions that return the Effect
- * data type everywhere for ease of use.
+ * preference.
+ *
+ * By using Option/Either and lifting to Effect only when necessary you can
+ * keep large portions of code side effect free, stricly syncronous, and not
+ * require the Effect runtime to run.
+ *
+ * Using Effect directly you lose some purity but gain in convenience.
+ * It may be warranted if you are using the dependency injection features a
+ * lot (especially in non library code).
  */
 
 // Can you figure out what cond does by looking at this example?
