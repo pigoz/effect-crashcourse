@@ -158,8 +158,7 @@ Effect.runPromise(flakyEffectAbsolved); // executes flakyEffectAbsolved
  * lot (especially in non library code).
  */
 
-// Can you figure out what cond does by looking at this example?
-// (Hint: You can also hover over cond to see some info)
+// This is an Effect native implementation of eitherFromRandom defined above
 function flakyEffectFromRandom(random: number) {
   return Effect.cond(
     () => random > 0.5,
