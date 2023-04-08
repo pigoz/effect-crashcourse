@@ -128,6 +128,7 @@ export const flakyEffectAbsolved = pipe(
 /* NOTE:
  * Effect.flatMap(Effect.fromEither) is so common that there's a built in function
  * that's equivalent to it: Effect.absolve.
+ * Moreover Effect.map(fn) + Effect.absolve = Effect.absolveWith(fn)
  */
 
 /* Up to this point we only constructed Effect values, none of the computations
