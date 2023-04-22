@@ -3,8 +3,8 @@ import * as Exit from "@effect/io/Exit";
 import * as Fiber from "@effect/io/Fiber";
 
 import * as ReadonlyArray from "@effect/data/ReadonlyArray";
-import * as Chunk from "@effect/data/Chunk";
 import * as Duration from "@effect/data/Duration";
+import * as Option from "@effect/data/Option";
 import { pipe } from "@effect/data/Function";
 
 /*
@@ -100,11 +100,21 @@ export const example3 = Effect.gen(function* ($) {
  */
 
 const effects = [sleeper(1, 300), sleeper(2, 100), sleeper(3, 200)];
+//    ^ Effect<never, never, Identifier>[]
 
 export const example4 = Effect.gen(function* ($) {
-  const ids: Identifier[] = yield* $(Effect.allPar(effects));
+  const ids = yield* $(Effect.allPar(effects));
+  //    ^ Identifier[]
 
   console.log(ids);
+
+  const effects2 = effects.map(effect => Effect.map(effect, Option.some));
+  //    ^ Effect<never, never, Option<Identifier>>[]
+
+  const cids = yield* $(Effect.collectAllPar(effects2));
+  //    ^ Identifier[]
+
+  console.log(cids);
 });
 
 // Effect.runPromise(example4);
