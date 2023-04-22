@@ -102,17 +102,9 @@ export const example3 = Effect.gen(function* ($) {
 const effects = [sleeper(1, 300), sleeper(2, 100), sleeper(3, 200)];
 
 export const example4 = Effect.gen(function* ($) {
-  // Chunk is an "Array-like" immutable data structure in @effect/data
-  type idsT = Chunk.Chunk<Identifier>;
-  const ids: idsT = yield* $(Effect.collectAllPar(effects));
+  const ids: Identifier[] = yield* $(Effect.allPar(effects));
 
-  console.log(
-    pipe(
-      ids,
-      Chunk.map(_ => _.id),
-      Chunk.toReadonlyArray,
-    ),
-  );
+  console.log(ids);
 });
 
 // Effect.runPromise(example4);
@@ -127,12 +119,7 @@ export const example4 = Effect.gen(function* ($) {
 export const example5 = Effect.gen(function* ($) {
   const identifiers: readonly Effect.Effect<never, never, number>[] = pipe(
     effects,
-    ReadonlyArray.map(effect =>
-      pipe(
-        effect,
-        Effect.map(_ => _.id),
-      ),
-    ),
+    ReadonlyArray.map(effect => Effect.map(effect, _ => _.id)),
   );
 
   const sum = pipe(
@@ -169,12 +156,8 @@ export const example6 = Effect.gen(function* ($) {
  */
 
 export const example7 = Effect.gen(function* ($) {
-  const identifiers = pipe(
-    [7, 8, 9],
-    Effect.forEachPar(x => sleeper(x)), // Effect<never, never, Chunk<Identifier>>
-    Effect.map(Chunk.map(_ => _.id.toString())), // Effect<never, never, Chunk<string>>
-    Effect.map(Chunk.join(",")), // Effect<never, never, string>
-  );
+  const identifiers = Effect.forEachPar([7, 8, 9], x => sleeper(x));
+  //    ^ Effect<never, never, Identifier[]>
 
   console.log(yield* $(identifiers));
 });

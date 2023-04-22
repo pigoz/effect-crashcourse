@@ -60,11 +60,8 @@ const getAndParseGist = pipe(
   // Effect.Effect<never, 'fetch' | 'json', unknown>
   Effect.flatMap(getJson),
 
-  // Effect.Effect<never, 'fetch' | 'json', Either<DecodeError, Gist>>
-  Effect.map(parseEither(GistSchema)),
-
   // Effect.Effect<never, 'fetch' | 'json' | DecodeError, Gist>
-  Effect.flatMap(Effect.fromEither),
+  Effect.flatMap(parseEither(GistSchema)),
 );
 
 Effect.runPromise(getAndParseGist)

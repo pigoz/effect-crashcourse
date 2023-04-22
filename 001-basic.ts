@@ -114,20 +114,24 @@ function eitherFromRandom(random: number): Either.Either<"fail", number> {
 // This will fail sometimes
 export const flakyEffect = pipe(
   Effect.sync(() => Math.random()), // Effect.Effect<never, never, number>
-  Effect.map(eitherFromRandom), // Effect.Effect<never, never, Either<'fail', number>>
-  Effect.flatMap(Effect.fromEither), // Effect.Effect<never, 'fail', number>
+  Effect.flatMap(eitherFromRandom), // Effect.Effect<never, 'fail', number>
 );
 
 // Same thing but using the number generator provided by Effect
 export const flakyEffectAbsolved = pipe(
   Effect.random(), // Effect.Effect<never, never, Random>
   Effect.flatMap(random => random.next()), // Effect.Effect<never, never, number>
-  Effect.map(eitherFromRandom), // Effect.Effect<never, never, Either<'fail', number>>
-  Effect.absolve, // Effect.Effect<never, 'fail', number>
+  Effect.flatMap(eitherFromRandom), // Effect.Effect<never, 'fail', number>
 );
-/* NOTE:
- * Effect.flatMap(Effect.fromEither) is so common that there's a built in function
- * that's equivalent to it: Effect.absolve.
+
+/* NOTE about Effect.flatMap(eitherFromRandom)
+ *
+ * Through some black magic, Either and Option are defined as sub types of the
+ * Effect type. That means every function in the Effect module can also accept
+ * Either or Option and tread them accordingly.
+ *
+ * Effect.flatMap(() => Either.right(1)) will turn into an Effect.succeed(1)
+ * Effect.flatMap(() => Either.left(2)) will turn into an Effect.fail(2)
  */
 
 /* Up to this point we only constructed Effect values, none of the computations
