@@ -46,7 +46,7 @@ const BarLive = Layer.effect(
   ),
 );
 
-// This is the exact same "scoped effect" we defined in 004-scope to manage a
+// This is the exact same "scoped effect" we defined in 005-scope to manage a
 // FileDescriptor lifetime!
 export const resource: Effect.Effect<Scope.Scope, never, FileDescriptor> =
   Effect.acquireRelease(

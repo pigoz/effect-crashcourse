@@ -58,13 +58,13 @@ import { pipe } from "@effect/data/Function";
  *
  * To define such errors you can use:
  *  - interface extending Data.Case in combination with Data.tagged
- *  - plain Typescript interfaces
+ *  - plain TypeScript interfaces
  *
  *  - Data.TaggedClass
- *  - plain Typescript classes
+ *  - plain TypeScript classes
  */
 
-// interface extending Data.Case in combination with Data.TaggedClass
+// interface extending Data.Case in combination with Data.tagged
 // NOTE: this is the most convenient option if you want to use interfaces
 export interface FooError extends Data.Case {
   readonly _tag: "FooError";
@@ -73,7 +73,7 @@ export interface FooError extends Data.Case {
 
 export const FooError = Data.tagged<FooError>("FooError");
 
-// plain Typescript interfaces with corresponding constructor
+// plain TypeScript interfaces with corresponding constructor
 // NOTE: this is the minimalist option if you want to use interfaces
 export interface BatError {
   readonly _tag: "BatError";
@@ -91,7 +91,7 @@ export class FooErrorClass extends Data.TaggedClass("FooError")<{
   readonly error: string;
 }> {}
 
-// plain Typescript classes
+// plain TypeScript classes
 export class BarError {
   readonly _tag = "BarError";
   constructor(readonly error: string) {}
@@ -245,7 +245,7 @@ catchAll satisfies Effect.Effect<
  * Unlike catchAll, or catchTag, catchSome doesn't narrow the error type, but
  * it can widen it to a broader class of errors.
  *
- * In real world code, you probably always want to use use catchTag instead
+ * In real world code, you probably always want to use catchTag instead
  * since it can both narrow and widen the error type.
  */
 const catchSome = Effect.catchSome(example, e =>

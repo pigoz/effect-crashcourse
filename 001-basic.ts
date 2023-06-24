@@ -193,7 +193,7 @@ export interface CustomRandom {
   readonly next: () => number;
 }
 
-export const CustomRandomTag = Context.Tag<CustomRandom>();
+export const CustomRandom = Context.Tag<CustomRandom>();
 
 /* To provide us with dependency injection features, Effect uses a data
  * structure called Context. It is a table mapping Tags to their
@@ -214,7 +214,7 @@ export const CustomRandomTag = Context.Tag<CustomRandom>();
  */
 
 export const serviceExample = pipe(
-  CustomRandomTag, // Context.Tag<CustomRandom, CustomRandom>
+  CustomRandom, // Context.Tag<CustomRandom, CustomRandom>
   Effect.map(random => random.next()), // Effect.Effect<CustomRandom, never, number>
   Effect.flatMap(flakyEffectFromRandom), // Effect.Effect<CustomRandom, 'fail', number>
 );
@@ -253,14 +253,14 @@ export const serviceExample = pipe(
 // (handy for Effects that depend on a single service)
 export const provideServiceExample = pipe(
   serviceExample,
-  Effect.provideService(CustomRandomTag, { next: Math.random }),
+  Effect.provideService(CustomRandom, { next: Math.random }),
 );
 
 // Providing an implementation with provideContext
 // (handy for Effects that depend on multiple services)
 const context = pipe(
   Context.empty(),
-  Context.add(CustomRandomTag, { next: Math.random }),
+  Context.add(CustomRandom, { next: Math.random }),
   // Context.add(FooTag)({ foo: 'foo' })
 );
 
@@ -278,9 +278,7 @@ export const CustomRandomServiceLive = () => ({
 
 export const liveProgram = pipe(
   serviceExample,
-  Effect.provideLayer(
-    Layer.succeed(CustomRandomTag, CustomRandomServiceLive()),
-  ),
+  Effect.provideLayer(Layer.succeed(CustomRandom, CustomRandomServiceLive())),
 );
 
 /*
@@ -302,5 +300,5 @@ export const CustomRandomServiceTest = () => ({
 
 export const testProgram = pipe(
   serviceExample,
-  Effect.provideService(CustomRandomTag, CustomRandomServiceTest()),
+  Effect.provideService(CustomRandom, CustomRandomServiceTest()),
 );
