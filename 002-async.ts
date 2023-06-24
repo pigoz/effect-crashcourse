@@ -11,7 +11,7 @@ import { parseEither } from "./utils/decode";
 const id = "97459c0045f373f4eaf126998d8f65dc";
 
 /*
- * Here, we use Effect.attemptCatchPromise to wrap a Promise-returning function
+ * Here, we use Effect.tryCatchPromise to wrap a Promise-returning function
  * into an Effect
  *
  * The first argument is a callback that returns the Promise to wrap.

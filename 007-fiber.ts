@@ -74,7 +74,7 @@ export const example2 = Effect.gen(function* ($) {
   (yield* $(Fiber.join(fiber))) satisfies Identifier;
 });
 
-// Effect.runPromise(example2).catch(x => console.log('error', x));
+// Effect.runPromise(example2).catch(x => console.log("error", x));
 
 /*
  * An alternative is using await which gives an Exit back
@@ -90,7 +90,7 @@ export const example3 = Effect.gen(function* ($) {
 });
 
 /*
- * Effect makes it easier to write concurrent code
+ Effect makes it easier to write concurrent code
  * despite concurrent code usually being notoriously difficult to write correctly.
  *
  * Effect comes with a many high level functions for common concurrency patterns
@@ -108,10 +108,10 @@ export const example4 = Effect.gen(function* ($) {
 
   console.log(ids);
 
-  const effects2 = effects.map(effect => Effect.map(effect, Option.some));
+  const effect2 = pipe(effects, ReadonlyArray.map(Effect.map(Option.some)));
   //    ^ Effect<never, never, Option<Identifier>>[]
 
-  const cids = yield* $(Effect.collectAllPar(effects2));
+  const cids = yield* $(Effect.collectAllPar(effect2));
   //    ^ Identifier[]
 
   console.log(cids);
@@ -129,7 +129,7 @@ export const example4 = Effect.gen(function* ($) {
 export const example5 = Effect.gen(function* ($) {
   const identifiers: readonly Effect.Effect<never, never, number>[] = pipe(
     effects,
-    ReadonlyArray.map(effect => Effect.map(effect, _ => _.id)),
+    ReadonlyArray.map(Effect.map(_ => _.id)),
   );
 
   const sum = pipe(
@@ -166,7 +166,7 @@ export const example6 = Effect.gen(function* ($) {
  */
 
 export const example7 = Effect.gen(function* ($) {
-  const identifiers = Effect.forEachPar([7, 8, 9], x => sleeper(x));
+  const identifiers = Effect.forEachPar([7, 8, 9], sleeper);
   //    ^ Effect<never, never, Identifier[]>
 
   console.log(yield* $(identifiers));
