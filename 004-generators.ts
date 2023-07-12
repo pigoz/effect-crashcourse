@@ -52,7 +52,7 @@ export const hell = pipe(
  * API using the "all" function built in into Effect.
  */
 export const tuple = pipe(
-  Effect.all(CustomRandomTag, FooTag, BarTag),
+  Effect.all([CustomRandomTag, FooTag, BarTag]),
   Effect.flatMap(([random, foo, bar]) =>
     Effect.sync(() => {
       console.log("not as bad!", random.next(), foo.foo, bar.bar);
@@ -126,7 +126,7 @@ export const generatorerr = Effect.gen(function* ($) {
  * instances the Do notation the only option.
  */
 export const doNotation = pipe(
-  Effect.Do(),
+  Effect.Do,
   Effect.bind("random", () => CustomRandomTag),
   Effect.bind("foo", () => FooTag),
   Effect.bind("bar", () => BarTag),

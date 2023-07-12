@@ -64,12 +64,12 @@ export const resource: Effect.Effect<Scope.Scope, never, FileDescriptor> =
     pipe(
       Effect.promise(() => promisify(fs.open)("/dev/null", "w")),
       Effect.map(fd => ({ fd })),
-      Effect.tap(() => Effect.logInfo("FileDescriptor acquired")),
+      Effect.tap(() => Effect.log("FileDescriptor acquired")),
     ),
     ({ fd }) =>
       pipe(
         Effect.promise(() => promisify(fs.close)(fd)),
-        Effect.tap(() => Effect.logInfo("FileDescriptor released")),
+        Effect.tap(() => Effect.log("FileDescriptor released")),
       ),
   );
 
@@ -84,14 +84,14 @@ export const resource: Effect.Effect<Scope.Scope, never, FileDescriptor> =
  */
 type useFileDescriptor = Effect.Effect<never, never, void>;
 
-export const useFileDescriptorNaive: useFileDescriptor = Effect.gen(function* (
-  $,
-) {
-  const scope = yield* $(Scope.make());
-  const fd = yield* $(Effect.provideService(resource, Scope.Scope, scope));
-  yield* $(Effect.logInfo(`useFileDescriptorNaive ${fd}`));
-  yield* $(Scope.close(scope, Exit.unit()));
-});
+export const useFileDescriptorNaive: useFileDescriptor = Effect.gen(
+  function* ($) {
+    const scope = yield* $(Scope.make());
+    const fd = yield* $(Effect.provideService(resource, Scope.Scope, scope));
+    yield* $(Effect.log(`useFileDescriptorNaive ${fd}`));
+    yield* $(Scope.close(scope, Exit.unit));
+  },
+);
 
 /* If you look closely at it, the previous code can be split in 3 steps:
  *
@@ -108,10 +108,10 @@ export const useFileDescriptorSmarter: useFileDescriptor =
     scope =>
       pipe(
         resource,
-        Effect.tap(_ => Effect.logInfo(`useFileDescriptorSmarter ${_.fd}`)),
+        Effect.tap(_ => Effect.log(`useFileDescriptorSmarter ${_.fd}`)),
         Effect.provideService(Scope.Scope, scope),
       ),
-    scope => Scope.close(scope, Exit.unit()),
+    scope => Scope.close(scope, Exit.unit),
   );
 
 /* While the first example didn't have any error handling, this has the added
@@ -128,7 +128,7 @@ export const useFileDescriptorSmarter: useFileDescriptor =
  */
 export const useFileDescriptor: useFileDescriptor = pipe(
   resource,
-  Effect.tap(_ => Effect.logInfo(`useFileDescriptor ${_.fd}`)),
+  Effect.tap(_ => Effect.log(`useFileDescriptor ${_.fd}`)),
   Effect.scoped,
 );
 

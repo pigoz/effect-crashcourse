@@ -3,8 +3,7 @@ import * as Cause from "@effect/io/Cause";
 import * as Data from "@effect/data/Data";
 import * as Match from "@effect/match";
 import * as Option from "@effect/data/Option";
-import * as Either from "@effect/data/Either";
-import { pipe } from "@effect/data/Function";
+import { identity, pipe } from "@effect/data/Function";
 
 /*
  * Effect has 3 main types of errors:
@@ -149,17 +148,15 @@ function flaky() {
 }
 
 export const example = pipe(
-  Effect.cond(
-    flaky,
-    () => "success1" as const,
-    () => FooError({ error: "error1" }),
-  ),
+  Effect.if(flaky(), {
+    onTrue: Effect.succeed("success1" as const),
+    onFalse: Effect.fail(FooError({ error: "error1" })),
+  }),
   Effect.flatMap(a =>
-    Effect.cond(
-      flaky,
-      () => [a, "success2"] as const,
-      () => new BarError("error2"),
-    ),
+    Effect.if(flaky(), {
+      onTrue: Effect.succeed([a, "success2"] as const),
+      onFalse: Effect.fail(new BarError("error2")),
+    }),
   ),
 );
 
@@ -215,9 +212,10 @@ catchTags satisfies Effect.Effect<
 /* If you are integrating Effect in a legacy codebase and you defined
  * errors as tagged unions with a key different from _tag, you can use
  * Effect.catch. The following is equivalent to Effect.catchTag */
-const catchCustomTag = Effect.catch(example, "_tag", "FooError", e =>
-  Effect.fail(new BazError(e.error)),
-);
+const catchCustomTag = Effect.catch(example, "_tag", {
+  failure: "FooError",
+  onFailure: e => Effect.fail(new BazError(e.error)),
+});
 
 catchCustomTag satisfies typeof catchTagFail;
 
@@ -248,16 +246,11 @@ catchAll satisfies Effect.Effect<
  * In real world code, you probably always want to use use catchTag instead
  * since it can both narrow and widen the error type.
  */
+
 const catchSome = Effect.catchSome(example, e =>
   pipe(
     Match.value(e),
-    Match.tag("FooError", e =>
-      Effect.cond(
-        () => e.error === "foo",
-        () => "foo" as const,
-        () => e,
-      ),
-    ),
+    Match.tag("FooError", _ => Effect.succeed("foo" as const)),
     Match.option,
   ),
 );
@@ -285,26 +278,11 @@ fallback satisfies Effect.Effect<
   readonly ["success1", "success2"] | "foo"
 >;
 
-/*
- * orElseEither uses an Either to store the original success value, or the
- * fallback success value
- */
-const fallbackEither = Effect.orElseEither(example, () =>
-  Effect.succeed("foo" as const),
-);
-
-fallbackEither satisfies Effect.Effect<
-  never,
-  never,
-  Either.Either<readonly ["success1", "success2"], "foo">
->;
-
 /* The last option is folding, known as matching in Effect */
-const match = Effect.match(
-  example,
-  error => error._tag,
-  success => success[0],
-);
+const match = Effect.match(example, {
+  onFailure: error => error._tag,
+  onSuccess: success => success[0],
+});
 
 match satisfies Effect.Effect<
   never,
@@ -333,16 +311,15 @@ Cause.sequential; // represents two errors that have occurred in sequence
 Cause.parallel; // represents two errors that have occurred in parallel
 
 // And with Cause.match you can match a cause by it's type:
-Cause.match(
-  Cause.empty,
-  "empty",
-  error => `fail ${error}`,
-  defect => `die ${defect}`,
-  fiberid => `interrupt ${fiberid}`,
-  (value, annotation) => `annotated ${value} ${annotation}`,
-  (left, right) => `sequential ${left} ${right}`,
-  (left, right) => `parallel ${left} ${right}`,
-);
+Cause.match(Cause.empty, {
+  onEmpty: "empty",
+  onFail: error => `fail ${error}`,
+  onDie: defect => `die ${defect}`,
+  onInterrupt: fiberid => `interrupt ${fiberid}`,
+  onAnnotated: (value, annotation) => `annotated ${value} ${annotation}`,
+  onSequential: (left, right) => `sequential ${left} ${right}`,
+  onParallel: (left, right) => `parallel ${left} ${right}`,
+});
 
 // Effect.cause returns an Effect that succeeds with the argument's Cause, or
 // the empty Cause if the argument succeeds.
@@ -366,8 +343,9 @@ const dieExample = pipe(
  * Effect.catchAllCause is similar to Effect.catchAll but exposes the full
  * Cause<E> in the callback, instead of just E
  */
-const catchAllCauseLog = Effect.catchAllCause(dieExample, cause =>
-  Effect.logErrorCauseMessage("something went wrong", cause),
+const catchAllCauseLog = Effect.catchAllCause(
+  dieExample,
+  Effect.logCause({ message: "something went wrong" }),
 );
 
 catchAllCauseLog satisfies Effect.Effect<never, never, void>;
@@ -391,19 +369,15 @@ catchAllCauseLog satisfies Effect.Effect<never, never, void>;
  * Defects, resurrect also recovers from Interrupts.
  */
 
-const interruptExample = pipe(
-  example,
-  Effect.flatMap(() => Effect.interrupt()),
+const catchDie = pipe(
+  dieExample,
+  Effect.catchAllDefect(_ => Effect.fail(_)),
+  Effect.ignore,
 );
 
-const absorb = pipe(dieExample, Effect.absorb, Effect.ignore);
-const resurrect = pipe(interruptExample, Effect.resurrect, Effect.ignore);
-
 const successful = pipe(
-  absorb,
-  Effect.flatMap(() => resurrect),
-  Effect.flatMap(() => Effect.succeed("recovered" as const)),
-  Effect.zipLeft(Effect.logInfo("exited successfully")),
+  Effect.zipRight(catchDie, Effect.succeed("recovered" as const)),
+  Effect.zipLeft(Effect.log("exited successfully")),
 );
 
 /*
@@ -414,20 +388,6 @@ const successful = pipe(
  */
 
 successful satisfies Effect.Effect<never, never, "recovered">;
-
-/* Failure to Defect
- *
- * Effect.refine* functions allow to convert all failures except some into
- * defects.
- */
-
-const refineTagOrDie = Effect.refineTagOrDie(example, "FooError");
-
-refineTagOrDie satisfies Effect.Effect<
-  never,
-  FooError,
-  readonly ["success1", "success2"]
->;
 
 /* Sandbox
  *
@@ -440,7 +400,19 @@ refineTagOrDie satisfies Effect.Effect<
 export const sandboxed = pipe(
   dieExample,
   Effect.sandbox,
-  // Hover over _errorCause to see its type
   Effect.catchSome(_errorCause => Option.some(Effect.succeed(1))),
   Effect.unsandbox,
 );
+
+/*
+ * With sandbox you can recover from both Defects and Interrupts.
+ * The following is equivalent to ZIOs absorb:
+ */
+export function absorb<R, E, A>(self: Effect.Effect<R, E, A>) {
+  return Effect.sandbox(self).pipe(
+    Effect.matchEffect({
+      onFailure: cause => Effect.fail(Cause.squashWith(cause, identity)),
+      onSuccess: Effect.succeed,
+    }),
+  );
+}

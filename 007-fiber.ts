@@ -4,7 +4,6 @@ import * as Fiber from "@effect/io/Fiber";
 
 import * as ReadonlyArray from "@effect/data/ReadonlyArray";
 import * as Duration from "@effect/data/Duration";
-import * as Option from "@effect/data/Option";
 import { pipe } from "@effect/data/Function";
 
 /*
@@ -25,23 +24,23 @@ const sleeper = (id: number, seconds = 1000) => {
   const identifier = new Identifier(id);
   return pipe(
     Effect.sleep(Duration.millis(seconds)),
-    Effect.tap(() => Effect.logInfo(`waked from ${identifier.id}`)),
+    Effect.tap(() => Effect.log(`waked from ${identifier.id}`)),
     Effect.flatMap(() => Effect.succeed(identifier)),
   );
 };
 
 export const example1 = Effect.gen(function* ($) {
-  yield* $(Effect.logInfo("before"));
+  yield* $(Effect.log("before"));
 
   // These types can be inferred, we're just explicitly annotating it here
   type fiberT = Fiber.RuntimeFiber<never, Identifier>;
   const fiber: fiberT = yield* $(Effect.fork(sleeper(1)));
 
-  yield* $(Effect.logInfo("after"));
+  yield* $(Effect.log("after"));
 
   const id: Identifier = yield* $(Fiber.join(fiber));
 
-  yield* $(Effect.logInfo(JSON.stringify(id)));
+  yield* $(Effect.log(JSON.stringify(id)));
 });
 
 // Effect.runPromise(example1);
@@ -61,7 +60,7 @@ const longFailing = (id: Identifier) =>
   pipe(
     Effect.sleep(Duration.seconds(1)),
     Effect.flatMap(() => Effect.fail("blah" as const)),
-    Effect.tap(() => Effect.logInfo(`waked from ${id.id}`)),
+    Effect.tap(() => Effect.log(`waked from ${id.id}`)),
     Effect.flatMap(() => Effect.succeed(id)),
   );
 
@@ -86,35 +85,37 @@ export const example3 = Effect.gen(function* ($) {
   type exitT = Exit.Exit<"blah", Identifier>;
   const exit: exitT = yield* $(Fiber.await(fiber));
 
-  yield* $(Effect.logInfo(JSON.stringify(exit)));
+  yield* $(Effect.log(JSON.stringify(exit)));
 });
 
 /*
- * Effect makes it easier to write concurrent code
- * despite concurrent code usually being notoriously difficult to write correctly.
+ * Effect makes it easier to write concurrent code despite concurrent code
+ * usually being notoriously difficult to write correctly.
  *
- * Effect comes with a many high level functions for common concurrency patterns
- *
- * It's fairly easy to find them with autocompletion because they all have
- * "Par" in their name: allPar, collectPar, collectAllPar, etc.
+ * Most of the Effect high level functions that handle Iterables, accept an
+ * options object as a second argument which allows to enable concurrency
  */
 
 const effects = [sleeper(1, 300), sleeper(2, 100), sleeper(3, 200)];
 //    ^ Effect<never, never, Identifier>[]
 
+const parallel = { concurrency: "inherit" } as const;
+
+// inherit:
+//   uses the current concurrency value (set with Effect.withConcurrency),
+//   if nothing is set this defaults to unbounded
+//
+// unbounded:
+//   uses as many fibers are possible
+//
+// integer value:
+//   uses exactly that many fibers
+
 export const example4 = Effect.gen(function* ($) {
-  const ids = yield* $(Effect.allPar(effects));
+  const ids = yield* $(Effect.all(effects, { concurrency: 5 }));
   //    ^ Identifier[]
 
   console.log(ids);
-
-  const effects2 = effects.map(effect => Effect.map(effect, Option.some));
-  //    ^ Effect<never, never, Option<Identifier>>[]
-
-  const cids = yield* $(Effect.collectAllPar(effects2));
-  //    ^ Identifier[]
-
-  console.log(cids);
 });
 
 // Effect.runPromise(example4);
@@ -134,7 +135,7 @@ export const example5 = Effect.gen(function* ($) {
 
   const sum = pipe(
     identifiers,
-    Effect.reduceAllPar(Effect.succeed(0), (acc, a) => acc + a),
+    Effect.reduceEffect(Effect.succeed(0), (acc, a) => acc + a, parallel),
   );
 
   console.log(yield* $(sum));
@@ -166,7 +167,9 @@ export const example6 = Effect.gen(function* ($) {
  */
 
 export const example7 = Effect.gen(function* ($) {
-  const identifiers = Effect.forEachPar([7, 8, 9], x => sleeper(x));
+  const identifiers = Effect.forEach([7, 8, 9], x => sleeper(x), {
+    concurrency: "inherit",
+  });
   //    ^ Effect<never, never, Identifier[]>
 
   console.log(yield* $(identifiers));

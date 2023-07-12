@@ -20,16 +20,16 @@ const id = "97459c0045f373f4eaf126998d8f65dc";
  * (E in Effect<R, E, A>) in case the Promise throws an exception.
  */
 const fetchGist = (id: string) =>
-  Effect.tryCatchPromise(
-    () => fetch(`https://api.github.com/gists/${id}`),
-    () => "fetch" as const,
-  ); // Effect.Effect<never, "fetch", Response>
+  Effect.tryPromise({
+    try: () => fetch(`https://api.github.com/gists/${id}`),
+    catch: () => "fetch" as const,
+  }); // Effect.Effect<never, "fetch", Response>
 
 const getJson = (res: Response) =>
-  Effect.tryCatchPromise(
-    () => res.json() as Promise<unknown>, // Promise<any> otherwise
-    () => "json" as const,
-  ); // Effect.Effect<never, "json", unknown>
+  Effect.tryPromise({
+    try: () => res.json() as Promise<unknown>, // Promise<any> otherwise
+    catch: () => "json" as const,
+  }); // Effect.Effect<never, "json", unknown>
 
 /*
  * Schema is a library in the Effect ecosystem that allows you to parse and

@@ -22,14 +22,14 @@ import { Foo, Bar, FileDescriptor } from "utils/contexts";
  */
 const program1 = Effect.gen(function* ($) {
   const foo = yield* $(Foo);
-  yield* $(Effect.logInfo(`program1 ${JSON.stringify(foo)}`));
+  yield* $(Effect.log(`program1 ${JSON.stringify(foo)}`));
 });
 
 const program2 = Effect.gen(function* ($) {
   const baz = yield* $(FileDescriptor);
   const bar = yield* $(Bar);
   yield* $(
-    Effect.logInfo(`program2 ${JSON.stringify(bar)} ${JSON.stringify(baz)}`),
+    Effect.log(`program2 ${JSON.stringify(bar)} ${JSON.stringify(baz)}`),
   );
 });
 
@@ -40,7 +40,7 @@ const FooLive = Layer.succeed(Foo, { foo: 4 });
 const BarLive = Layer.effect(
   Bar,
   pipe(
-    Effect.random(),
+    Effect.random,
     Effect.flatMap(random => random.next()),
     Effect.map(bar => ({ bar })),
   ),
@@ -53,12 +53,12 @@ export const resource: Effect.Effect<Scope.Scope, never, FileDescriptor> =
     pipe(
       Effect.promise(() => promisify(fs.open)("/dev/null", "w")),
       Effect.map(fd => ({ fd })),
-      Effect.tap(() => Effect.logInfo("FileDescriptor acquired")),
+      Effect.tap(() => Effect.log("FileDescriptor acquired")),
     ),
     ({ fd }) =>
       pipe(
         Effect.promise(() => promisify(fs.close)(fd)),
-        Effect.tap(() => Effect.logInfo("FileDescriptor released")),
+        Effect.tap(() => Effect.log("FileDescriptor released")),
       ),
   );
 
@@ -102,7 +102,7 @@ const makeAppRuntime = <R, E, A>(layer: Layer.Layer<R, E, A>) =>
 
     return {
       runtime,
-      close: Scope.close(scope, Exit.unit()),
+      close: Scope.close(scope, Exit.unit),
     };
   });
 

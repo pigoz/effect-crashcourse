@@ -119,7 +119,7 @@ export const flakyEffect = pipe(
 
 // Same thing but using the number generator provided by Effect
 export const flakyEffectAbsolved = pipe(
-  Effect.random(), // Effect.Effect<never, never, Random>
+  Effect.random, // Effect.Effect<never, never, Random>
   Effect.flatMap(random => random.next()), // Effect.Effect<never, never, number>
   Effect.flatMap(eitherFromRandom), // Effect.Effect<never, 'fail', number>
 );
@@ -164,15 +164,14 @@ Effect.runPromise(flakyEffectAbsolved); // executes flakyEffectAbsolved
 
 // This is an Effect native implementation of eitherFromRandom defined above
 function flakyEffectFromRandom(random: number) {
-  return Effect.cond(
-    () => random > 0.5,
-    () => random,
-    () => "fail" as const,
-  );
+  return Effect.if(random > 0.5, {
+    onTrue: Effect.succeed(random),
+    onFalse: Effect.fail("fail" as const),
+  });
 }
 
 export const flakyEffectNative = pipe(
-  Effect.random(), // Effect.Effect<never, never, Random>
+  Effect.random, // Effect.Effect<never, never, Random>
   Effect.flatMap(random => random.next()), // Effect.Effect<never, never, number>
   Effect.flatMap(flakyEffectFromRandom), // Effect.Effect<never, 'fail', number>
 );

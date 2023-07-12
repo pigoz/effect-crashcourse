@@ -12,15 +12,15 @@
   "author": "",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@effect/data": "0.12.2",
-    "@effect/io": "0.25.0",
-    "@effect/match": "0.16.0",
-    "@effect/schema": "0.16.0",
-    "typescript": "5.0.4"
+    "@effect/data": "0.14.1",
+    "@effect/io": "0.32.1",
+    "@effect/match": "~0.26.0",
+    "@effect/schema": "0.26.0",
+    "typescript": "5.1.6"
   },
   "devDependencies": {
-    "@types/node": "18.15.13",
-    "prettier": "2.8.7",
-    "tsx": "3.12.6"
+    "@types/node": "20.4.1",
+    "prettier": "3.0.0",
+    "tsx": "3.12.7"
   }
 }

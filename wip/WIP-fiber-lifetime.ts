@@ -2,9 +2,6 @@ import * as Effect from "@effect/io/Effect";
 import * as Fiber from "@effect/io/Fiber";
 import * as Duration from "@effect/data/Duration";
 import * as Supervisor from "@effect/io/Supervisor";
-import * as Scope from "@effect/io/Scope";
-import * as Chunk from "@effect/data/Chunk";
-import * as Exit from "@effect/io/Exit";
 import { pipe } from "@effect/data/Function";
 
 /*
@@ -19,23 +16,23 @@ import { pipe } from "@effect/data/Function";
 const TICK = 50;
 
 const slow = pipe(
-  Effect.logInfo("slow task running"),
+  Effect.log("slow task running"),
   Effect.delay(Duration.millis(TICK)),
   Effect.repeatN(4),
-  Effect.onInterrupt(() => Effect.logInfo("slow task interrupted")),
+  Effect.onInterrupt(() => Effect.log("slow task interrupted")),
 );
 
 const failing = Effect.fail("boom");
 
 export const infinite = pipe(
-  Effect.logInfo("infinite task running"),
+  Effect.log("infinite task running"),
   Effect.delay(Duration.millis(TICK)),
   Effect.forever,
-  Effect.onInterrupt(() => Effect.logInfo("infinite task interrupted")),
+  Effect.onInterrupt(() => Effect.log("infinite task interrupted")),
 );
 
 export const example0 = Effect.gen(function* ($) {
-  const sup = yield* $(Supervisor.track());
+  const sup = yield* $(Supervisor.track);
   yield* $(pipe(Effect.fork(infinite), Effect.supervised(sup)));
   //psu.onEnd();
   // const fiber = pipe(
@@ -51,7 +48,7 @@ Effect.runPromise(example0);
 export const example1 = Effect.gen(function* ($) {
   yield* $(Effect.forkDaemon(slow));
   yield* $(Effect.sleep(Duration.millis(TICK * 2 + TICK / 2)));
-  yield* $(Effect.logInfo("done"));
+  yield* $(Effect.log("done"));
 });
 
 // Effect.runPromise(example1);
@@ -69,7 +66,7 @@ export const example1 = Effect.gen(function* ($) {
 export const example2 = Effect.gen(function* ($) {
   const fiber = yield* $(Effect.forkDaemon(slow));
   yield* $(Effect.sleep(Duration.millis(TICK * 2 + TICK / 2)));
-  yield* $(Effect.logInfo("done"));
+  yield* $(Effect.log("done"));
   yield* $(Fiber.interrupt(fiber));
 });
 
@@ -81,10 +78,10 @@ export const example2 = Effect.gen(function* ($) {
  */
 
 export const example3 = Effect.gen(function* ($) {
-  const sup = Supervisor.fromEffect(Effect.logInfo("asdf"));
+  const sup = Supervisor.fromEffect(Effect.log("asdf"));
   const fiber = yield* $(Effect.fork(pipe(failing, Effect.supervised(sup))));
   yield* $(Effect.sleep(Duration.millis(TICK * 7 + TICK / 2)));
-  yield* $(Effect.logInfo("done"));
+  yield* $(Effect.log("done"));
   yield* $(Fiber.join(fiber));
 });
 
