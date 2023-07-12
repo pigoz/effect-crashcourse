@@ -91,15 +91,17 @@ export const example3 = Effect.gen(function* ($) {
 /*
  * Effect makes it easier to write concurrent code despite concurrent code
  * usually being notoriously difficult to write correctly.
- *
- * Most of the Effect high level functions that handle Iterables, accept an
- * options object as a second argument which allows to enable concurrency
  */
 
 const effects = [sleeper(1, 300), sleeper(2, 100), sleeper(3, 200)];
 //    ^ Effect<never, never, Identifier>[]
 
-const parallel = { concurrency: "inherit" } as const;
+/*
+ * Most of the Effect high level functions that handle Iterables, accept an
+ * options object as a second argument which allows to enable concurrency
+ */
+
+const concurrent = { concurrency: "inherit" } as const;
 
 // inherit:
 //   uses the current concurrency value (set with Effect.withConcurrency),
@@ -135,7 +137,7 @@ export const example5 = Effect.gen(function* ($) {
 
   const sum = pipe(
     identifiers,
-    Effect.reduceEffect(Effect.succeed(0), (acc, a) => acc + a, parallel),
+    Effect.reduceEffect(Effect.succeed(0), (acc, a) => acc + a, concurrent),
   );
 
   console.log(yield* $(sum));
@@ -167,9 +169,7 @@ export const example6 = Effect.gen(function* ($) {
  */
 
 export const example7 = Effect.gen(function* ($) {
-  const identifiers = Effect.forEach([7, 8, 9], x => sleeper(x), {
-    concurrency: "inherit",
-  });
+  const identifiers = Effect.forEach([7, 8, 9], x => sleeper(x), concurrent);
   //    ^ Effect<never, never, Identifier[]>
 
   console.log(yield* $(identifiers));
