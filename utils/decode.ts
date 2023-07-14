@@ -1,7 +1,6 @@
 import * as Schema from "@effect/schema/Schema";
-import * as Either from "@effect/data/Either";
-import { pipe } from "@effect/data/Function";
 import { formatErrors } from "@effect/schema/TreeFormatter";
+import { Either } from "effect";
 
 export class DecodeError {
   readonly _tag = "DecodeError";
@@ -10,8 +9,7 @@ export class DecodeError {
 
 export function parseEither<_, A>(schema: Schema.Schema<_, A>) {
   return (input: unknown) =>
-    pipe(
-      Schema.parseEither(schema)(input, { errors: "all" }),
+    Schema.parseEither(schema)(input, { errors: "all" }).pipe(
       Either.mapLeft(
         parseError => new DecodeError(formatErrors(parseError.errors)),
       ),

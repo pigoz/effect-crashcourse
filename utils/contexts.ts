@@ -1,4 +1,4 @@
-import * as Context from "@effect/data/Context";
+import * as Context from "effect/Context";
 
 export interface Foo {
   readonly foo: number;

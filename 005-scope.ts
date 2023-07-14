@@ -1,7 +1,4 @@
-import { pipe } from "@effect/data/Function";
-import * as Effect from "@effect/io/Effect";
-import * as Scope from "@effect/io/Scope";
-import * as Exit from "@effect/io/Exit";
+import { pipe, Effect, Scope, Exit } from "effect";
 import { FileDescriptor } from "utils/contexts";
 import * as fs from "node:fs";
 import { promisify } from "node:util";

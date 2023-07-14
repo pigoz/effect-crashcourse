@@ -1,10 +1,4 @@
-import * as Effect from "@effect/io/Effect";
-import * as Exit from "@effect/io/Exit";
-import * as Fiber from "@effect/io/Fiber";
-
-import * as ReadonlyArray from "@effect/data/ReadonlyArray";
-import * as Duration from "@effect/data/Duration";
-import { pipe } from "@effect/data/Function";
+import { pipe, Effect, Exit, Fiber, ReadonlyArray, Duration } from "effect";
 
 /*
  * Until now we executed effects in a way that made them look synchronous.

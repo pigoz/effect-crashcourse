@@ -1,6 +1,4 @@
-import * as Effect from "@effect/io/Effect";
-import * as Either from "@effect/data/Either";
-import * as Data from "@effect/data/Data";
+import { Effect, Either, Data } from "effect";
 
 export class FetchFooError extends Data.TaggedClass("FetchFooError")<{
   readonly error: string;

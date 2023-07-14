@@ -1,6 +1,4 @@
-import { pipe } from "@effect/data/Function";
-import * as Effect from "@effect/io/Effect";
-import * as Context from "@effect/data/Context";
+import { pipe, Effect, Context } from "effect";
 
 /* Callback hell.
  *

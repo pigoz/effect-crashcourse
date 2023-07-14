@@ -1,6 +1,4 @@
-import { identity } from "@effect/data/Function";
-import * as Cause from "@effect/io/Cause";
-import * as Effect from "@effect/io/Effect";
+import { identity, Cause, Effect } from "effect";
 
 const program = Effect.interrupt;
 

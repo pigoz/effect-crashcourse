@@ -1,4 +1,4 @@
-import * as Effect from "@effect/io/Effect";
+import * as Effect from "effect/Effect";
 import { CustomPromisifyLegacy, CustomPromisifySymbol } from "node:util";
 
 type Callback<E, A> = (e: E, a: A) => void;

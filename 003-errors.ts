@@ -1,9 +1,5 @@
-import * as Effect from "@effect/io/Effect";
-import * as Cause from "@effect/io/Cause";
-import * as Data from "@effect/data/Data";
+import { identity, pipe, Effect, Cause, Data, Option, Equal } from "effect";
 import * as Match from "@effect/match";
-import * as Option from "@effect/data/Option";
-import { identity, pipe } from "@effect/data/Function";
 
 /*
  * Effect has 3 main types of errors:
@@ -109,8 +105,6 @@ export class BazError {
  * Errors defined through Data have the added benefit of providing an Equal
  * implementation. That allows to compare errors by value instead of reference.
  */
-
-import * as Equal from "@effect/data/Equal";
 
 // This is true because the argument to FooError is compared by value
 export const isEqual = Equal.equals(

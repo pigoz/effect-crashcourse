@@ -1,8 +1,4 @@
-import { pipe } from "@effect/data/Function";
-import * as Either from "@effect/data/Either";
-import * as Effect from "@effect/io/Effect";
-import * as Layer from "@effect/io/Layer";
-import * as Context from "@effect/data/Context";
+import { Effect, Either, Layer, Context, pipe } from "effect";
 
 /*
  * The unique insight of Effect is that errors and requirements/dependencies

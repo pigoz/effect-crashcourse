@@ -1,4 +1,4 @@
-import * as Brand from "@effect/data/Brand";
+import * as Brand from "effect/Brand";
 
 export type Eur = number & Brand.Brand<"Eur">;
 export const Eur = Brand.nominal<Eur>();

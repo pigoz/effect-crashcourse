@@ -1,9 +1,5 @@
-import { identity } from "@effect/data/Function";
-import * as Cause from "@effect/io/Cause";
-import * as Effect from "@effect/io/Effect";
-import * as Data from "@effect/data/Data";
+import { Effect, Cause, Data, Chunk } from "effect";
 import * as S from "@effect/schema/Schema";
-import * as Chunk from "@effect/data/Chunk";
 
 export class UnauthorizedError extends Data.TaggedClass("UnauthorizedError")<{
   readonly error: string;
