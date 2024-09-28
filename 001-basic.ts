@@ -9,24 +9,29 @@ import { Effect, Either, Layer, Context, pipe } from "effect";
  *
  * The data type of Effect looks like the following:
  *
- * Effect<R, E, A>
+ * Effect<A, E, R>
  *
- * The computation has requirements (R), can fail (E) or succeed (A).
+ * The computation can succeed (A), fail (E), and can have requirements (R)
  *
- * You can loosely think of Effect<R, E, A> as the following type:
+ * You can loosely think of Effect<A, E, R> as the following type:
  *
  *   (r: R) => Promise<Either<E, A>> | Either<E, A>
  *
- *  - R is the computation requirements
- *  - E is the type of the error in case the computation fails
- *  - A is the return type in case the computation succeeds
+ * Similarly to a function, when you define an Effect nothing happens.
+ * It's just a value representing some code.
  *
- * Think of these as separate channels, all of which you can interact within
- * your program. R is the requirements channel, E is the failure/error channel,
- * and A is the success channel.
+ * This is different from i.e. Promises which are started immediately as they
+ * are defined.
  *
- * R will be covered in more detail later, don't worry if it doesn't make
- * sense yet. Focus on understanding E and A first.
+ * When you do decide to run an Effect (for example using Effect.runPromise),
+ * it will either:
+ *
+ *  - run successfully and return a value of type A
+ *  - fail and throw an error of type E
+ *
+ * The R geniric type will be covered in detail in future chapters.
+ * It's meant to provide some form of dependency injection that you will love.
+ * (Trust me it's not the enterprisey stuff you expect from Java)
  *
  * Effect is inspired by ZIO (a Scala library)
  */
@@ -49,24 +54,24 @@ import { Effect, Either, Layer, Context, pipe } from "effect";
 
 /*
  * succeed creates an Effect value that includes it's argument in the
- * success channel (A in Effect<R, E, A>)
+ * success channel (A in Effect<A, E, R>)
  */
 export const succeed = Effect.succeed(7);
-//           ^ Effect.Effect<never, never, number>;
+//           ^ Effect.Effect<number, never, never>;
 
 /*
  * fail creates an Effect value that includes it's argument in the
- * failure channel (E in Effect<R, E, A>)
+ * failure channel (E in Effect<A, E, R>)
  */
 export const fail = Effect.fail(3);
-//           ^ Effect.Effect<never, number, never>;
+//           ^ Effect.Effect<never, never, number>;
 
 /*
  * sync can be thought as a lazy alternative to succeed.
  * A is built lazily only when the Effect is run.
  */
 export const sync = Effect.sync(() => new Date());
-//           ^ Effect.Effect<never, never, Date>;
+//           ^ Effect.Effect<Date, never, never>;
 
 /*
  * NOTE: if we used Effect.succeed(new Date()), the date stored in the success
@@ -86,10 +91,10 @@ export const failSync = Effect.failSync(() => new Date());
 /* suspend allows to lazily build an Effect value.
  *
  * While sync builds A lazily, and failSync builds E lazily, suspend builds
- * the whole Effect<R, E, A> lazily!
+ * the whole Effect<A, E, R> lazily!
  */
 export const suspend =
-  //         ^ Effect.Effect<never, '<.5', Date>;
+  //         ^ Effect.Effect<Date, '<.5', never>;
   Effect.suspend(() =>
     Math.random() > 0.5
       ? Effect.succeed(new Date())
@@ -103,21 +108,21 @@ export const suspend =
  * The following is an example of a computation that can fail. We will look at
  * more error handling in a later chapter.
  */
-function eitherFromRandom(random: number): Either.Either<"fail", number> {
+function eitherFromRandom(random: number): Either.Either<number, "fail"> {
   return random > 0.5 ? Either.right(random) : Either.left("fail" as const);
 }
 
 // This will fail sometimes
 export const flakyEffect = pipe(
-  Effect.sync(() => Math.random()), // Effect.Effect<never, never, number>
-  Effect.flatMap(eitherFromRandom), // Effect.Effect<never, 'fail', number>
+  Effect.sync(() => Math.random()), // Effect.Effect<number, never, never>
+  Effect.flatMap(eitherFromRandom), // Effect.Effect<number, 'fail', never>
 );
 
 // Same thing but using the number generator provided by Effect
-export const flakyEffectAbsolved = pipe(
-  Effect.random, // Effect.Effect<never, never, Random>
-  Effect.flatMap(random => random.next()), // Effect.Effect<never, never, number>
-  Effect.flatMap(eitherFromRandom), // Effect.Effect<never, 'fail', number>
+export const flakyEffectRandom = pipe(
+  Effect.random, // Effect.Effect<Random, never, never>
+  Effect.flatMap(random => random.next), // Effect.Effect<number, never, never>
+  Effect.flatMap(eitherFromRandom), // Effect.Effect<number, 'fail', never>
 );
 
 /* NOTE about Effect.flatMap(eitherFromRandom)
@@ -140,7 +145,7 @@ export const flakyEffectAbsolved = pipe(
  * Think of it as defining a workflow, and then running it only when you are ready.
  */
 
-Effect.runPromise(flakyEffectAbsolved); // executes flakyEffectAbsolved
+Effect.runPromise(flakyEffectRandom); // executes flakyEffectRandom
 
 /* As an alternative, instead of using eitherFromRandom and dealing with an
  * Either that we later lift into an Effect, we can write that conditional
@@ -159,17 +164,14 @@ Effect.runPromise(flakyEffectAbsolved); // executes flakyEffectAbsolved
  */
 
 // This is an Effect native implementation of eitherFromRandom defined above
-function flakyEffectFromRandom(random: number) {
-  return Effect.if(random > 0.5, {
-    onTrue: Effect.succeed(random),
-    onFalse: Effect.fail("fail" as const),
-  });
+function effectFromRandom(random: number) {
+  return random > 0.5 ? Effect.succeed(random) : Effect.fail("fail" as const);
 }
 
 export const flakyEffectNative = pipe(
   Effect.random, // Effect.Effect<never, never, Random>
-  Effect.flatMap(random => random.next()), // Effect.Effect<never, never, number>
-  Effect.flatMap(flakyEffectFromRandom), // Effect.Effect<never, 'fail', number>
+  Effect.flatMap(random => random.next), // Effect.Effect<number, never, never>
+  Effect.flatMap(effectFromRandom), // Effect.Effect<number, 'fail', never>
 );
 
 /* Context
@@ -177,18 +179,18 @@ export const flakyEffectNative = pipe(
  *
  * Up until now we only dealt with Effects that have no dependencies.
  *
- * The R in Effect<R, E, A> has always been never, meaning that that the
+ * The R in Effect<A, E, R> has always been never, meaning that that the
  * Effects we've defined don't depend on anything.
  *
  * Suppose we want to implement our own custom random generator, and use it in
  * our code as a dependency, similar to how we used the one provided by Effect
  * (the Effect.random() above)
  */
-export interface CustomRandom {
-  readonly next: () => number;
-}
 
-export const CustomRandomTag = Context.Tag<CustomRandom>();
+class CustomRandom extends Context.Tag("CustomRandom")<
+  CustomRandom,
+  { readonly next: Effect.Effect<number> }
+>() {}
 
 /* To provide us with dependency injection features, Effect uses a data
  * structure called Context. It is a table mapping Tags to their
@@ -204,14 +206,14 @@ export const CustomRandomTag = Context.Tag<CustomRandom>();
  *    Effect.map(CustomRandom, (service) => ...)
  *
  * Doing so will introduce a dependency on CustomRandom in our code.
- * That will be reflected in the Effect<R, E, A> datatype, where the
+ * That will be reflected in the Effect<A, E, R> datatype, where the
  * requirements channel (R) will become of type CustomRandom.
  */
 
 export const serviceExample = pipe(
-  CustomRandomTag, // Context.Tag<CustomRandom, CustomRandom>
-  Effect.map(random => random.next()), // Effect.Effect<CustomRandom, never, number>
-  Effect.flatMap(flakyEffectFromRandom), // Effect.Effect<CustomRandom, 'fail', number>
+  CustomRandom, // Context.Tag<CustomRandom, CustomRandom>
+  Effect.flatMap(random => random.next), // Effect.Effect<CustomRandom, never, number>
+  Effect.flatMap(effectFromRandom), // Effect.Effect<CustomRandom, 'fail', number>
 );
 
 /*
@@ -227,55 +229,48 @@ export const serviceExample = pipe(
  *
  * Would lead to the following type error:
  *
- * Argument of type 'Effect<CustomRandom, "fail", number>' is not assignable
- * to parameter of type 'Effect<never, "fail", number>'.
+ * Argument of type 'Effect<number, "fail", CustomRandom>' is not assignable
+ * to parameter of type 'Effect<number, "fail", never>'.
  * Type 'CustomRandom' is not assignable to type 'never'.
  *
  * To run an Effect we need it to have no missing dependencies, in other
  * words R must be never.
  *
- * By providing an implementation, we turn the R in Effect<R, E, A> into a
- * `never`, so we end up with a Effect<never, E, A> which we can run.
- *
- * Effect has a handful of functions that allow us to provide an implementation.
- *
- * For example, we can use provideService, provideContext, provideLayer, to
- * provide and implementation.
+ * By providing an implementation, we turn the R in Effect<A, E, R> into a
+ * `never`, so we end up with a Effect<A, E, never> which we can run.
  *
  */
 
+const CustomRandomServiceLive = {
+  // Note: in Effect jargon a Service is the implementation for a required Tag
+  next: Effect.sync(() => Math.random()),
+};
+
 // Providing an implementation with provideService
 // (handy for Effects that depend on a single service)
-export const provideServiceExample = pipe(
-  serviceExample,
-  Effect.provideService(CustomRandomTag, { next: Math.random }),
+export const provideServiceExample = serviceExample.pipe(
+  Effect.provideService(CustomRandom, CustomRandomServiceLive),
 );
 
 // Providing an implementation with provideContext
 // (handy for Effects that depend on multiple services)
 const context = pipe(
   Context.empty(),
-  Context.add(CustomRandomTag, { next: Math.random }),
-  // Context.add(FooTag)({ foo: 'foo' })
+  Context.add(CustomRandom, CustomRandomServiceLive),
+  // Context.add(Foo)({ foo: 'foo' })
 );
 
 export const provideContextExample = pipe(
-  serviceExample, // Effect.Effect<CustomRandom, 'fail', number>
-  Effect.provideContext(context), // Effect.Effect<never, 'fail', number>
+  serviceExample, // Effect.Effect<number, 'fail', CustomRandom>
+  Effect.provide(context), // Effect.Effect<number, 'fail', never>
 );
 
-// Providing an implementation with layers
+// Providing an implementation with Layer
 // (handy for real world systems with complex dependency trees)
-// (will go more in depth about layers in a future guide)
-export const CustomRandomServiceLive = () => ({
-  next: Math.random,
-});
-
+// (will go more in depth about layers in a future chapter)
 export const liveProgram = pipe(
   serviceExample,
-  Effect.provideLayer(
-    Layer.succeed(CustomRandomTag, CustomRandomServiceLive()),
-  ),
+  Effect.provide(Layer.succeed(CustomRandom, CustomRandomServiceLive)),
 );
 
 /*
@@ -291,11 +286,11 @@ export const liveProgram = pipe(
  * core logic of your program. Notice how serviceExample doesn't change, but
  * the implementation of CustomRandom can be changed later.
  */
-export const CustomRandomServiceTest = () => ({
-  next: () => 0.3,
-});
+const CustomRandomServiceTest = {
+  next: Effect.succeed(0.3),
+};
 
 export const testProgram = pipe(
   serviceExample,
-  Effect.provideService(CustomRandomTag, CustomRandomServiceTest()),
+  Effect.provideService(CustomRandom, CustomRandomServiceTest),
 );

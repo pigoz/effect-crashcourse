@@ -12,14 +12,13 @@
   "author": "",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@effect/match": "~0.26.0",
-    "@effect/schema": "0.26.1",
-    "effect": "2.0.0-next.16",
-    "typescript": "5.1.6"
+    "@effect/schema": "0.73.4",
+    "effect": "3.8.3",
+    "typescript": "5.6.2"
   },
   "devDependencies": {
-    "@types/node": "20.4.2",
-    "prettier": "3.0.0",
-    "tsx": "3.12.7"
+    "@types/node": "22.5.5",
+    "prettier": "3.3.3",
+    "tsx": "4.19.1"
   }
 }

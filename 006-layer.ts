@@ -8,23 +8,23 @@ import { promisify } from "node:util";
  *
  * Firstly we import some services definitions:
  */
-import { Foo, Bar, FileDescriptor } from "utils/contexts";
+class Foo extends Context.Tag("Foo")<Foo, { readonly foo: number }>() {}
+class Bar extends Context.Tag("Bar")<Bar, { readonly bar: number }>() {}
+class Baz extends Context.Tag("Baz")<Bar, { readonly baz: number }>() {}
 
 /*
  * Now we define some Effects using those services.
  * Everything should look familiar to the previous chapters.
  */
 const program1 = Effect.gen(function* ($) {
-  const foo = yield* $(Foo);
+  const foo = yield* Foo;
   yield* $(Effect.log(`program1 ${JSON.stringify(foo)}`));
 });
 
-const program2 = Effect.gen(function* ($) {
-  const baz = yield* $(FileDescriptor);
-  const bar = yield* $(Bar);
-  yield* $(
-    Effect.log(`program2 ${JSON.stringify(bar)} ${JSON.stringify(baz)}`),
-  );
+const program2 = Effect.gen(function* () {
+  const baz = yield* Baz;
+  const bar = yield* Bar;
+  yield* Effect.log("program2", bar, baz);
 });
 
 // These are simple Layers with no lifetime
@@ -33,9 +33,8 @@ const FooLive = Layer.succeed(Foo, { foo: 4 });
 // You can even build a layer from an effect
 const BarLive = Layer.effect(
   Bar,
-  pipe(
-    Effect.random,
-    Effect.flatMap(random => random.next()),
+  Effect.random.pipe(
+    Effect.flatMap(random => random.next),
     Effect.map(bar => ({ bar })),
   ),
 );

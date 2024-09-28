@@ -1,4 +1,5 @@
-import { pipe, Effect, Exit, Fiber, ReadonlyArray, Duration } from "effect";
+import { pipe, Effect, Exit, Fiber, Array, Duration } from "effect";
+import { satisfies } from "effect/Function";
 
 /*
  * Until now we executed effects in a way that made them look synchronous.
@@ -23,18 +24,18 @@ const sleeper = (id: number, seconds = 1000) => {
   );
 };
 
-export const example1 = Effect.gen(function* ($) {
-  yield* $(Effect.log("before"));
+export const example1 = Effect.gen(function* () {
+  yield* Effect.log("before");
 
-  // These types can be inferred, we're just explicitly annotating it here
-  type fiberT = Fiber.RuntimeFiber<never, Identifier>;
-  const fiber: fiberT = yield* $(Effect.fork(sleeper(1)));
+  const fiber = yield* Effect.fork(sleeper(1));
+  fiber satisfies Fiber.RuntimeFiber<Identifier>;
 
-  yield* $(Effect.log("after"));
+  yield* Effect.log("after");
 
-  const id: Identifier = yield* $(Fiber.join(fiber));
+  const id = yield* Fiber.join(fiber);
+  id satisfies Identifier;
 
-  yield* $(Effect.log(JSON.stringify(id)));
+  yield* Effect.log(JSON.stringify(id));
 });
 
 // Effect.runPromise(example1);
@@ -62,9 +63,9 @@ const longFailing = (id: Identifier) =>
  * Using Fiber.join / joinAll will result in a catchable error when running a
  * failing effect
  */
-export const example2 = Effect.gen(function* ($) {
-  const fiber = yield* $(Effect.fork(longFailing(new Identifier(1))));
-  (yield* $(Fiber.join(fiber))) satisfies Identifier;
+export const example2 = Effect.gen(function* () {
+  const fiber = yield* Effect.fork(longFailing(new Identifier(1)));
+  (yield* Fiber.join(fiber)) satisfies Identifier;
 });
 
 // Effect.runPromise(example2).catch(x => console.log('error', x));
@@ -73,13 +74,13 @@ export const example2 = Effect.gen(function* ($) {
  * An alternative is using await which gives an Exit back
  */
 
-export const example3 = Effect.gen(function* ($) {
-  const fiber = yield* $(Effect.fork(longFailing(new Identifier(1))));
+export const example3 = Effect.gen(function* () {
+  const fiber = yield* Effect.fork(longFailing(new Identifier(1)));
 
-  type exitT = Exit.Exit<"blah", Identifier>;
-  const exit: exitT = yield* $(Fiber.await(fiber));
+  const exit = yield* Fiber.await(fiber);
+  exit satisfies Exit.Exit<Identifier, "blah">;
 
-  yield* $(Effect.log(JSON.stringify(exit)));
+  yield* Effect.log(JSON.stringify(exit));
 });
 
 /*
@@ -88,7 +89,7 @@ export const example3 = Effect.gen(function* ($) {
  */
 
 const effects = [sleeper(1, 300), sleeper(2, 100), sleeper(3, 200)];
-//    ^ Effect<never, never, Identifier>[]
+//    ^ Effect<Identifier>[]
 
 /*
  * Most of the Effect high level functions that handle Iterables, accept an
@@ -108,7 +109,7 @@ const concurrent = { concurrency: "inherit" } as const;
 //   uses exactly that many fibers
 
 export const example4 = Effect.gen(function* ($) {
-  const ids = yield* $(Effect.all(effects, { concurrency: 5 }));
+  const ids = yield* Effect.all(effects, { concurrency: 5 });
   //    ^ Identifier[]
 
   console.log(ids);
@@ -123,18 +124,21 @@ export const example4 = Effect.gen(function* ($) {
  * [ 1, 2, 3 ]
  */
 
-export const example5 = Effect.gen(function* ($) {
-  const identifiers: readonly Effect.Effect<never, never, number>[] = pipe(
-    effects,
-    ReadonlyArray.map(effect => Effect.map(effect, _ => _.id)),
+export const example5 = Effect.gen(function* () {
+  const identifiers = Array.map(effects, effect =>
+    Effect.map(effect, _ => _.id),
   );
 
-  const sum = pipe(
+  identifiers satisfies readonly Effect.Effect<number>[];
+
+  const sum = Effect.reduceEffect(
     identifiers,
-    Effect.reduceEffect(Effect.succeed(0), (acc, a) => acc + a, concurrent),
+    Effect.succeed(0),
+    (acc, a) => acc + a,
+    concurrent,
   );
 
-  console.log(yield* $(sum));
+  console.log(yield* sum);
 });
 
 // Effect.runPromise(example5);
@@ -146,13 +150,13 @@ export const example5 = Effect.gen(function* ($) {
  * 6
  */
 
-export const example6 = Effect.gen(function* ($) {
+export const example6 = Effect.gen(function* () {
   const winner = pipe(
     Effect.raceAll(effects), // Races effects with Effect.never()
     Effect.map(_ => _.id),
   );
 
-  console.log(yield* $(winner));
+  console.log(yield* winner);
 });
 
 // Effect.runPromise(example6);
@@ -162,11 +166,11 @@ export const example6 = Effect.gen(function* ($) {
  * 2
  */
 
-export const example7 = Effect.gen(function* ($) {
+export const example7 = Effect.gen(function* () {
   const identifiers = Effect.forEach([7, 8, 9], x => sleeper(x), concurrent);
   //    ^ Effect<never, never, Identifier[]>
 
-  console.log(yield* $(identifiers));
+  console.log(yield* identifiers);
 });
 
 // Effect.runPromise(example7);

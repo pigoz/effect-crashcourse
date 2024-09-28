@@ -1,7 +1,5 @@
+import { Schema } from "@effect/schema";
 import { Effect, pipe } from "effect";
-import * as Schema from "@effect/schema/Schema";
-import { parseEither } from "./utils/decode";
-
 /*
  * The most iconic asynchronous example in JavaScript is fetching from APIs.
  * In this example we build a small program to fetch a Gist from Github.
@@ -22,13 +20,13 @@ const fetchGist = (id: string) =>
   Effect.tryPromise({
     try: () => fetch(`https://api.github.com/gists/${id}`),
     catch: () => "fetch" as const,
-  }); // Effect.Effect<never, "fetch", Response>
+  }); // Effect.Effect<Response, "fetch">
 
 const getJson = (res: Response) =>
   Effect.tryPromise({
     try: () => res.json() as Promise<unknown>, // Promise<any> otherwise
     catch: () => "json" as const,
-  }); // Effect.Effect<never, "json", unknown>
+  }); // Effect.Effect<unknown, "json">
 
 /*
  * Schema is a library in the Effect ecosystem that allows you to parse and
@@ -36,31 +34,28 @@ const getJson = (res: Response) =>
  *
  * It may look familiar if you have used libraries like io-ts or zod
  */
-const GistSchema = Schema.struct({
-  url: Schema.string,
-  files: Schema.record(
-    Schema.string,
-    Schema.struct({
-      filename: Schema.string,
-      type: Schema.string,
-      language: Schema.string,
-      raw_url: Schema.string,
+const Gist = Schema.Struct({
+  url: Schema.String,
+  files: Schema.Record({
+    key: Schema.String,
+    value: Schema.Struct({
+      filename: Schema.String,
+      type: Schema.String,
+      language: Schema.String,
+      raw_url: Schema.String,
     }),
-  ),
+  }),
 });
 
 // Can get the typescript type from the schema
-export interface Gist extends Schema.To<typeof GistSchema> {}
+export interface Gist extends Schema.Schema.Type<typeof Gist> {}
+
+const decodeGist = Schema.decodeUnknownEither(Gist);
 
 const getAndParseGist = pipe(
-  // Effect.Effect<never, 'fetch', Response>
-  fetchGist(id),
-
-  // Effect.Effect<never, 'fetch' | 'json', unknown>
-  Effect.flatMap(getJson),
-
-  // Effect.Effect<never, 'fetch' | 'json' | DecodeError, Gist>
-  Effect.flatMap(parseEither(GistSchema)),
+  fetchGist(id), // Effect.Effect<Response, 'fetch'>
+  Effect.flatMap(getJson), // Effect.Effect<unknown, 'fetch' | 'json'>
+  Effect.flatMap(decodeGist), // Effect.Effect<Gist, 'fetch' | 'json' | DecodeError>
 );
 
 Effect.runPromise(getAndParseGist)
@@ -79,8 +74,8 @@ import * as fs from "node:fs";
  * It's similar to a Promise's resolve function, but with an explicit error value.
  */
 export const readFileEffect = (path: fs.PathOrFileDescriptor) =>
-  Effect.async<never, NodeJS.ErrnoException, Buffer>(resume =>
-    fs.readFile(path, (error, data) => {
+  Effect.async<Buffer, NodeJS.ErrnoException>((resume, signal) =>
+    fs.readFile(path, { signal }, (error, data) => {
       if (error) {
         resume(Effect.fail(error));
       } else {
@@ -88,28 +83,3 @@ export const readFileEffect = (path: fs.PathOrFileDescriptor) =>
       }
     }),
   );
-
-/*
- * asyncInterrupt works similarly, but also allows to handle interruptions
- * (we will explore what interruptions are in future chapters)
- *
- * If the Effect returned from readFileEffectInterrupt gets interrupted by
- * the runtime controller.abort() will be called, resulting in the underlying
- * fs.readFile being interrupted too.
- */
-export const readFileEffectInterrupt = (path: fs.PathOrFileDescriptor) =>
-  // NOTE: this one of the few occasions where Effect needs us to pass in the
-  // correct generics, otherwise types don't get inferred properly.
-  Effect.asyncInterrupt<never, NodeJS.ErrnoException, Buffer>(resume => {
-    const controller = new AbortController();
-
-    fs.readFile(path, { signal: controller.signal }, (error, data) => {
-      if (error) {
-        resume(Effect.fail(error));
-      } else {
-        resume(Effect.succeed(data));
-      }
-    });
-
-    return Effect.sync(() => controller.abort());
-  });

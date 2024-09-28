@@ -1,5 +1,4 @@
 import { pipe, Effect, Scope, Exit } from "effect";
-import { FileDescriptor } from "utils/contexts";
 import * as fs from "node:fs";
 import { promisify } from "node:util";
 
@@ -56,7 +55,12 @@ import { promisify } from "node:util";
  *
  * Let's define a basic resource that implements the FileDescriptor interface.
  */
-export const resource: Effect.Effect<Scope.Scope, never, FileDescriptor> =
+
+interface FileDescriptor {
+  fd: number;
+}
+
+export const resource: Effect.Effect<FileDescriptor, never, Scope.Scope> =
   Effect.acquireRelease(
     pipe(
       Effect.promise(() => promisify(fs.open)("/dev/null", "w")),
@@ -79,14 +83,14 @@ export const resource: Effect.Effect<Scope.Scope, never, FileDescriptor> =
  * Anyhow, we now have our "scoped effect". If we want to run it we have to
  * provide a Scope to it - which turns R from Scope to never.
  */
-type useFileDescriptor = Effect.Effect<never, never, void>;
+type useFileDescriptor = Effect.Effect<void, never, never>;
 
 export const useFileDescriptorNaive: useFileDescriptor = Effect.gen(
-  function* ($) {
-    const scope = yield* $(Scope.make());
-    const fd = yield* $(Effect.provideService(resource, Scope.Scope, scope));
-    yield* $(Effect.log(`useFileDescriptorNaive ${fd}`));
-    yield* $(Scope.close(scope, Exit.unit));
+  function* () {
+    const scope = yield* Scope.make();
+    const fd = yield* Effect.provideService(resource, Scope.Scope, scope);
+    yield* Effect.log(`useFileDescriptorNaive ${fd}`);
+    yield* Scope.close(scope, Exit.void);
   },
 );
 
@@ -108,7 +112,7 @@ export const useFileDescriptorSmarter: useFileDescriptor =
         Effect.tap(_ => Effect.log(`useFileDescriptorSmarter ${_.fd}`)),
         Effect.provideService(Scope.Scope, scope),
       ),
-    scope => Scope.close(scope, Exit.unit),
+    scope => Scope.close(scope, Exit.void),
   );
 
 /* While the first example didn't have any error handling, this has the added
@@ -155,12 +159,12 @@ Effect.runPromise(useFileDescriptor);
  * this is just to drive the point home.
  */
 export const myAcquireUseRelease = <R, E, A, R2, E2, A2, R3, X>(
-  acquire: Effect.Effect<R, E, A>,
-  use: (a: A) => Effect.Effect<R2, E2, A2>,
+  acquire: Effect.Effect<A, E, R>,
+  use: (a: A) => Effect.Effect<A2, E2, R2>,
   release: (
     a: A,
     exit: Exit.Exit<unknown, unknown>,
-  ) => Effect.Effect<R3, never, X>,
+  ) => Effect.Effect<X, never, R3>,
 ) =>
   pipe(
     Effect.acquireRelease(acquire, release),

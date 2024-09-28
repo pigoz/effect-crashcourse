@@ -1,5 +1,13 @@
-import { identity, pipe, Effect, Cause, Data, Option, Equal } from "effect";
-import * as Match from "@effect/match";
+import {
+  identity,
+  pipe,
+  Effect,
+  Cause,
+  Data,
+  Option,
+  Equal,
+  Match,
+} from "effect";
 
 /*
  * Effect has 3 main types of errors:
@@ -61,7 +69,7 @@ import * as Match from "@effect/match";
 
 // interface extending Data.Case in combination with Data.TaggedClass
 // NOTE: this is the most convenient option if you want to use interfaces
-export interface FooError extends Data.Case {
+export interface FooError {
   readonly _tag: "FooError";
   readonly error: string;
 }
@@ -143,21 +151,21 @@ function flaky() {
 
 export const example = pipe(
   Effect.if(flaky(), {
-    onTrue: Effect.succeed("success1" as const),
-    onFalse: Effect.fail(FooError({ error: "error1" })),
+    onTrue: () => Effect.succeed("success1" as const),
+    onFalse: () => Effect.fail(FooError({ error: "error1" })),
   }),
   Effect.flatMap(a =>
     Effect.if(flaky(), {
-      onTrue: Effect.succeed([a, "success2"] as const),
-      onFalse: Effect.fail(new BarError("error2")),
+      onTrue: () => Effect.succeed([a, "success2"] as const),
+      onFalse: () => Effect.fail(new BarError("error2")),
     }),
   ),
 );
 
 example satisfies Effect.Effect<
-  never,
+  readonly ["success1", "success2"],
   FooError | BarError,
-  readonly ["success1", "success2"]
+  never
 >;
 
 /* If we want to recover from one of those failures, we can use catchTag.
@@ -172,9 +180,9 @@ const catchTagSucceed = Effect.catchTag(example, "FooError", e =>
 // Notice how FooError disappeared from the E type, and A now has a union of
 // the two possible return types
 catchTagSucceed satisfies Effect.Effect<
-  never,
+  readonly ["success1", "success2"] | readonly ["recover", string],
   BarError,
-  readonly ["success1", "success2"] | readonly ["recover", string]
+  never
 >;
 
 // Here, we caught FooError but returned another error called BazError!
@@ -184,9 +192,9 @@ const catchTagFail = Effect.catchTag(example, "FooError", e =>
 );
 
 catchTagFail satisfies Effect.Effect<
-  never,
+  readonly ["success1", "success2"],
   BarError | BazError,
-  readonly ["success1", "success2"]
+  never
 >;
 
 /* catchTags allows to catch multiple errors from the failure channel */
@@ -198,9 +206,9 @@ const catchTags = Effect.catchTags(example, {
 });
 
 catchTags satisfies Effect.Effect<
+  readonly ["success1", "success2"] | "foo" | "bar",
   never,
-  never,
-  readonly ["success1", "success2"] | "foo" | "bar"
+  never
 >;
 
 /* If you are integrating Effect in a legacy codebase and you defined
@@ -226,10 +234,10 @@ const catchAll = Effect.catchAll(example, e =>
 );
 
 catchAll satisfies Effect.Effect<
-  never,
-  never,
   | readonly ["success1", "success2"]
-  | readonly ["recover", "FooError" | "BarError"]
+  | readonly ["recover", "FooError" | "BarError"],
+  never,
+  never
 >;
 
 /* catchSome recovers from some (or all) errors in the failure channel.
@@ -253,9 +261,9 @@ const catchSome = Effect.catchSome(example, e =>
 // ecosystem
 
 catchSome satisfies Effect.Effect<
-  never,
+  readonly ["success1", "success2"] | "foo",
   FooError | BarError,
-  readonly ["success1", "success2"] | "foo"
+  never
 >;
 
 /* orElse* functions are similar to catchAll but on top of failures they
@@ -267,9 +275,9 @@ catchSome satisfies Effect.Effect<
 const fallback = Effect.orElse(example, () => Effect.succeed("foo" as const));
 
 fallback satisfies Effect.Effect<
+  readonly ["success1", "success2"] | "foo",
   never,
-  never,
-  readonly ["success1", "success2"] | "foo"
+  never
 >;
 
 /* The last option is folding, known as matching in Effect */
@@ -279,9 +287,9 @@ const match = Effect.match(example, {
 });
 
 match satisfies Effect.Effect<
+  "FooError" | "BarError" | "success1",
   never,
-  never,
-  "FooError" | "BarError" | "success1"
+  never
 >;
 
 /* Handling Defects
@@ -300,7 +308,6 @@ Cause.empty; // Cause of an Effect that succeeds
 Cause.fail; // Cause of an Effect that errors with fail (failure)
 Cause.die; // Cause of an Effect that errors with die (defect)
 Cause.interrupt; // Cause of an Effect that errors with interrupt
-Cause.annotated; // represents a cause with metadata (for example the stack trace)
 Cause.sequential; // represents two errors that have occurred in sequence
 Cause.parallel; // represents two errors that have occurred in parallel
 
@@ -310,7 +317,6 @@ Cause.match(Cause.empty, {
   onFail: error => `fail ${error}`,
   onDie: defect => `die ${defect}`,
   onInterrupt: fiberid => `interrupt ${fiberid}`,
-  onAnnotated: (value, annotation) => `annotated ${value} ${annotation}`,
   onSequential: (left, right) => `sequential ${left} ${right}`,
   onParallel: (left, right) => `parallel ${left} ${right}`,
 });
@@ -318,10 +324,10 @@ Cause.match(Cause.empty, {
 // Effect.cause returns an Effect that succeeds with the argument's Cause, or
 // the empty Cause if the argument succeeds.
 const emptyCause = Effect.cause(Effect.succeed(1));
-emptyCause satisfies Effect.Effect<never, never, Cause.Cause<never>>;
+emptyCause satisfies Effect.Effect<Cause.Cause<never>, never, never>;
 
 const failCause = Effect.cause(Effect.fail(1));
-failCause satisfies Effect.Effect<never, never, Cause.Cause<number>>;
+failCause satisfies Effect.Effect<Cause.Cause<number>, never, never>;
 
 /*
  * Since defects are unexpected errors, most of the time you just may want to
@@ -337,12 +343,9 @@ const dieExample = pipe(
  * Effect.catchAllCause is similar to Effect.catchAll but exposes the full
  * Cause<E> in the callback, instead of just E
  */
-const catchAllCauseLog = Effect.catchAllCause(
-  dieExample,
-  Effect.logCause({ message: "something went wrong" }),
-);
+const catchAllCauseLog = Effect.catchAllCause(dieExample, Effect.log);
 
-catchAllCauseLog satisfies Effect.Effect<never, never, void>;
+catchAllCauseLog satisfies Effect.Effect<void, never, never>;
 
 /*
  * Effect.runPromise(catchAllCauseLog) will print a stack trace. i.e:
@@ -381,7 +384,7 @@ const successful = pipe(
  * Here it's used to run logInfo but discard it's result.
  */
 
-successful satisfies Effect.Effect<never, never, "recovered">;
+successful satisfies Effect.Effect<"recovered", never, never>;
 
 /* Sandbox
  *
