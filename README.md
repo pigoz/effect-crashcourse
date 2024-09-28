@@ -7,6 +7,14 @@ It's written from my point of view of a casual fp-ts user (i.e.: I use Option
 and Either but I feel stupid as soon ad Applicative, Functor, Monad, etc are
 mentioned).
 
+## Effect has a website now
+
+This guide was written before Effect has a website or any documentation by 
+poking at the Effect source code, ZIO docs
+
+Now the [website](https://effect.website/) has a very comprehensive documentation. 
+I'm leaving this here to benefit people with shorter attention spans.
+
 ### Usage
 
 Start reading from [001-basic.ts](001-basic.ts)!
