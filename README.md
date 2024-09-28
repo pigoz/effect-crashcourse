@@ -1,4 +1,4 @@
-### The practical guide I wish existed while learning [@Effect-TS](https://github.com/Effect-TS/)
+### The practical guide I wish existed while learning [Effect](https://github.com/Effect-TS/)
 
 This guide explores some concepts from [Effect](https://github.com/Effect-TS/effect).
 It's designed to give you a feel for the library as fast as possible.
@@ -7,7 +7,7 @@ It's written from my point of view of a casual fp-ts user (i.e.: I use Option
 and Either but I feel stupid as soon ad Applicative, Functor, Monad, etc are
 mentioned).
 
-## Effect has a website now
+#### Effect has a website now
 
 This guide was written before Effect has a website or any documentation by 
 poking at the Effect source code, ZIO docs
