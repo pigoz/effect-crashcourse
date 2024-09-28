@@ -1,11 +1,11 @@
 ### The practical guide I wish existed while learning [@Effect-TS](https://github.com/Effect-TS/)
 
-This guide explores some concepts from the new version of
-[Effect](https://github.com/Effect-TS/effect), and is written from the point
-of view of a casual fp-ts 2 user.
+This guide explores some concepts from [Effect](https://github.com/Effect-TS/effect).
+It's designed to give you a feel for the library as fast as possible.
 
-It assumes high level familiarity with the Option and Either data types found
-in many functional programming languages
+It's written from my point of view of a casual fp-ts user (i.e.: I use Option
+and Either but I feel stupid as soon ad Applicative, Functor, Monad, etc are
+mentioned).
 
 ### Usage
 
