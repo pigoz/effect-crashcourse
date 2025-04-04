@@ -64,7 +64,7 @@ export const succeed = Effect.succeed(7);
  * failure channel (E in Effect<A, E, R>)
  */
 export const fail = Effect.fail(3);
-//           ^ Effect.Effect<never, never, number>;
+//           ^ Effect.Effect<never, number, never>;
 
 /*
  * sync can be thought as a lazy alternative to succeed.
